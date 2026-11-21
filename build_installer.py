@@ -75,10 +75,26 @@ until docker compose exec -T wiki php -r 'echo 1;' >/dev/null 2>&1; do sleep 2; 
 
 if [ ! -f wiki/LocalSettings.php ]; then
   log "Instalasi MediaWiki pertama kali"
+  ADMIN_PASS=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)
   docker compose exec -T wiki php /var/www/html/wiki/maintenance/install.php \
     --dbname wikidb --dbuser wikiuser --dbpass wikipassword --dbserver db \
     --servername http://localhost:8080 --scriptpath /wiki --lang en \
-    --pass '**************' 'OnnoWiki Lokal' 'Admin'
+    --pass "$ADMIN_PASS" 'OnnoWiki Lokal' 'Admin'
+  cat >> wiki/LocalSettings.php <<'PERMS'
+
+# Replika OnnoWiki: pengunjung anonim hanya boleh membaca.
+$wgGroupPermissions['*']['edit'] = false;
+$wgGroupPermissions['*']['createpage'] = false;
+$wgGroupPermissions['*']['createtalk'] = false;
+PERMS
+  cat > ADMIN_CREDENTIALS.txt <<EOF
+Wiki     : http://localhost:8080/wiki/
+User     : Admin
+Password : $ADMIN_PASS
+EOF
+  chmod 600 ADMIN_CREDENTIALS.txt
+  echo ">> Login admin : Admin / $ADMIN_PASS"
+  echo ">> Tersimpan juga di $DIR/ADMIN_CREDENTIALS.txt (0600)"
 fi
 
 EXTRA=""
@@ -108,6 +124,7 @@ log "SELESAI"
 echo "Buka       : http://localhost:8080/wiki/"
 echo "Folder     : $DIR"
 echo "Update     : cd $DIR && ./update.sh   (atau jalankan scripts/nightly_sync.py)"
+echo "Login      : $DIR/ADMIN_CREDENTIALS.txt (0600)"
 echo "Catatan    : baca KNOWN_GAPS.md untuk halaman/gambar yang memang kosong di sumber."
 '''
 

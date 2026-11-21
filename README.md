@@ -26,6 +26,30 @@ Script di atas otomatis:
 4. Mengambil semua halaman dan gambar lewat MediaWiki API (dengan retry).
 5. Import XML + gambar, lalu menghitung ulang statistik.
 
+## Login admin & izin edit
+
+Saat instalasi pertama, script **membuat password admin secara acak** (16 karakter) dan:
+
+- menampilkannya di layar saat instalasi,
+- menyimpannya di `onnowiki-replica/ADMIN_CREDENTIALS.txt` (mode `0600`).
+
+User admin: **`Admin`** (kalau tidak ada, cek `Special:ListUsers` di wiki lokal).
+**Segera ganti password** lewat `Special:ChangePassword` setelah login.
+
+Secara default MediaWiki **mengizinkan siapa saja mengedit**, termasuk pengunjung anonim.
+Karena ini replika publik, installer menambahkan ke `LocalSettings.php`:
+
+```php
+$wgGroupPermissions['*']['edit'] = false;
+$wgGroupPermissions['*']['createpage'] = false;
+$wgGroupPermissions['*']['createtalk'] = false;
+```
+
+Jadi **pengunjung hanya bisa membaca**. User terdaftar tetap bisa edit (default MediaWiki).
+Pengaturan ini **tidak ada di dashboard admin web** — harus disunting di file
+`wiki/LocalSettings.php` di server (atau memakai ekstensi seperti ManageWiki kalau ingin lewat UI).
+Untuk mengizinkan edit anonim lagi, hapus/ubah tiga baris itu lalu restart container.
+
 ## Update halaman dari sumber
 
 ```bash

@@ -598,6 +598,30 @@ Script di atas otomatis:
 4. Mengambil semua halaman dan gambar lewat MediaWiki API (dengan retry).
 5. Import XML + gambar, lalu menghitung ulang statistik.
 
+## Login admin & izin edit
+
+Saat instalasi pertama, script **membuat password admin secara acak** (16 karakter) dan:
+
+- menampilkannya di layar saat instalasi,
+- menyimpannya di `onnowiki-replica/ADMIN_CREDENTIALS.txt` (mode `0600`).
+
+User admin: **`Admin`** (kalau tidak ada, cek `Special:ListUsers` di wiki lokal).
+**Segera ganti password** lewat `Special:ChangePassword` setelah login.
+
+Secara default MediaWiki **mengizinkan siapa saja mengedit**, termasuk pengunjung anonim.
+Karena ini replika publik, installer menambahkan ke `LocalSettings.php`:
+
+```php
+$wgGroupPermissions['*']['edit'] = false;
+$wgGroupPermissions['*']['createpage'] = false;
+$wgGroupPermissions['*']['createtalk'] = false;
+```
+
+Jadi **pengunjung hanya bisa membaca**. User terdaftar tetap bisa edit (default MediaWiki).
+Pengaturan ini **tidak ada di dashboard admin web** — harus disunting di file
+`wiki/LocalSettings.php` di server (atau memakai ekstensi seperti ManageWiki kalau ingin lewat UI).
+Untuk mengizinkan edit anonim lagi, hapus/ubah tiga baris itu lalu restart container.
+
 ## Update halaman dari sumber
 
 ```bash
@@ -668,10 +692,26 @@ until docker compose exec -T wiki php -r 'echo 1;' >/dev/null 2>&1; do sleep 2; 
 
 if [ ! -f wiki/LocalSettings.php ]; then
   log "Instalasi MediaWiki pertama kali"
+  ADMIN_PASS=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)
   docker compose exec -T wiki php /var/www/html/wiki/maintenance/install.php \
     --dbname wikidb --dbuser wikiuser --dbpass wikipassword --dbserver db \
     --servername http://localhost:8080 --scriptpath /wiki --lang en \
-    --pass '**************' 'OnnoWiki Lokal' 'Admin'
+    --pass "$ADMIN_PASS" 'OnnoWiki Lokal' 'Admin'
+  cat >> wiki/LocalSettings.php <<'PERMS'
+
+# Replika OnnoWiki: pengunjung anonim hanya boleh membaca.
+$wgGroupPermissions['*']['edit'] = false;
+$wgGroupPermissions['*']['createpage'] = false;
+$wgGroupPermissions['*']['createtalk'] = false;
+PERMS
+  cat > ADMIN_CREDENTIALS.txt <<EOF
+Wiki     : http://localhost:8080/wiki/
+User     : Admin
+Password : $ADMIN_PASS
+EOF
+  chmod 600 ADMIN_CREDENTIALS.txt
+  echo ">> Login admin : Admin / $ADMIN_PASS"
+  echo ">> Tersimpan juga di $DIR/ADMIN_CREDENTIALS.txt (0600)"
 fi
 
 EXTRA=""
@@ -701,4 +741,5 @@ log "SELESAI"
 echo "Buka       : http://localhost:8080/wiki/"
 echo "Folder     : $DIR"
 echo "Update     : cd $DIR && ./update.sh   (atau jalankan scripts/nightly_sync.py)"
+echo "Login      : $DIR/ADMIN_CREDENTIALS.txt (0600)"
 echo "Catatan    : baca KNOWN_GAPS.md untuk halaman/gambar yang memang kosong di sumber."
