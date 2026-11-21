@@ -65,6 +65,7 @@ WG_BIND_IP="${WG_BIND_IP:-127.0.0.1}"
 WG_PORT="${WG_PORT:-8080}"
 WG_SERVER_URL="${WG_SERVER_URL:-http://${WG_BIND_IP}:${WG_PORT}}"
 sed -i "s|127.0.0.1:8080:80|${WG_BIND_IP}:${WG_PORT}:80|" docker-compose.yml
+sed -i "s|192.0.2.73:8080:80|${WG_BIND_IP}:${WG_PORT}:80|" docker-compose.yml
 
 if [ ! -f wiki/index.php ]; then
   log "Mengunduh MediaWiki 1.43.12"
