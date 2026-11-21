@@ -6,13 +6,17 @@ tanpa perlu bantuan AI, tanpa dump SQL, dan tanpa akses ke server sumber.
 Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan bebas diambil.
 **Berikan atribusi ke OnnoWiki/SpeedyWiki di wiki lokal Anda.**
 
-## Cara pakai (Debian/Ubuntu)
+## Cara pakai (Debian / Ubuntu saja untuk sekarang)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/anaksepaku/onnowiki-replica/main/install-onnowiki.sh | sudo bash
+curl -fsSL 'https://raw.githubusercontent.com/anaksepaku/onnowiki-replica/main/install-onnowiki.sh?plain=1' | sudo bash
 ```
 
 Selesai. Buka **http://localhost:8080/wiki/**.
+
+> **Dukungan OS:** saat ini hanya **Debian / Ubuntu** (script memakai `apt-get` untuk memasang
+> Docker). Dukungan **Windows dan macOS** menyusul berikutnya — untuk sekarang silakan pakai VM/Linux
+> atau Docker Desktop dengan distro Debian/Ubuntu di dalamnya.
 
 Script di atas otomatis:
 1. Memasang Docker + Compose plugin bila belum ada.
@@ -35,7 +39,7 @@ Jalankan harian lewat cron/host bila mau.
 
 ```bash
 export PAGES=5 IMAGES=3
-curl -fsSL https://raw.githubusercontent.com/anaksepaku/onnowiki-replica/main/install-onnowiki.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/anaksepaku/onnowiki-replica/main/install-onnowiki.sh?plain=1 | sudo bash
 ```
 
 ## Port & path
