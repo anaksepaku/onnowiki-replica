@@ -13,7 +13,7 @@ files = [
 
 head = r'''#!/bin/bash
 # Replikasi OnnoWiki dalam satu perintah:
-#   curl -fsSL https://cdn.jsdelivr.net/gh/anaksepaku/onnowiki-replica@main/install-onnowiki.sh | sudo bash
+#   curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo bash
 #
 # Opsi (export dulu sebelum pipe):
 #   export PAGES=5 IMAGES=3   # smoke test cepat
@@ -26,7 +26,7 @@ log() { printf '\n==> %s\n' "$*"; }
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "Script ini butuh root untuk memasang Docker."
-  echo "Jalankan: curl -fsSL https://cdn.jsdelivr.net/gh/anaksepaku/onnowiki-replica@main/install-onnowiki.sh | sudo bash"
+  echo "Jalankan: curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo bash"
   exit 1
 fi
 
