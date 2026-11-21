@@ -9,7 +9,7 @@ Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan 
 ## Cara pakai (Debian/Ubuntu)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/install-onnowiki.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/anaksepaku/onnowiki-replica/main/install-onnowiki.sh | sudo bash
 ```
 
 Selesai. Buka **http://localhost:8080/wiki/**.
@@ -35,7 +35,7 @@ Jalankan harian lewat cron/host bila mau.
 
 ```bash
 export PAGES=5 IMAGES=3
-curl -fsSL https://raw.githubusercontent.com/OWNER/REPO/main/install-onnowiki.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/anaksepaku/onnowiki-replica/main/install-onnowiki.sh | sudo bash
 ```
 
 ## Port & path
