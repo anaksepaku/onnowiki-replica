@@ -61,6 +61,11 @@ for i, (src, dest) in enumerate(files, 1):
 
 tail = r'''chmod +x scripts/*.py
 
+WG_BIND_IP="${WG_BIND_IP:-127.0.0.1}"
+WG_PORT="${WG_PORT:-8080}"
+WG_SERVER_URL="${WG_SERVER_URL:-http://${WG_BIND_IP}:${WG_PORT}}"
+sed -i "s|127.0.0.1:8080:80|${WG_BIND_IP}:${WG_PORT}:80|" docker-compose.yml
+
 if [ ! -f wiki/index.php ]; then
   log "Mengunduh MediaWiki 1.43.12"
   curl -fsSL https://releases.wikimedia.org/mediawiki/1.43/mediawiki-1.43.12.tar.gz -o mw.tar.gz
@@ -79,8 +84,10 @@ if [ ! -f wiki/LocalSettings.php ]; then
   [ -n "$ADMIN_PASS" ] || ADMIN_PASS=$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | cut -c1-16)
   docker compose exec -T wiki php /var/www/html/wiki/maintenance/install.php \
     --dbname wikidb --dbuser wikiuser --dbpass wikipassword --dbserver db \
-    --servername http://localhost:8080 --scriptpath /wiki --lang en \
+    --servername "$WG_SERVER_URL" --scriptpath /wiki --lang en \
     --pass "$ADMIN_PASS" 'OnnoWiki Lokal' 'Admin'
+  # install.php sering mengabaikan --servername; paksa di LocalSettings.php
+  sed -i "s|^\$wgServer = .*|\$wgServer = \"$WG_SERVER_URL\";|" wiki/LocalSettings.php
   cat >> wiki/LocalSettings.php <<'PERMS'
 
 # Replika OnnoWiki: pengunjung anonim hanya boleh membaca.
@@ -89,7 +96,7 @@ $wgGroupPermissions['*']['createpage'] = false;
 $wgGroupPermissions['*']['createtalk'] = false;
 PERMS
   cat > ADMIN_CREDENTIALS.txt <<EOF
-Wiki     : http://localhost:8080/wiki/
+Wiki     : $WG_SERVER_URL/wiki/
 User     : Admin
 Password : $ADMIN_PASS
 EOF
@@ -113,18 +120,26 @@ docker compose exec -T wiki bash -c \
 
 log "Import XML"
 XML=$(docker compose exec -T wiki sh -c 'ls -1 /workspace/data/xml/wiki-*.xml | tail -1' | tr -d '\r')
-docker compose exec -T wiki php /var/www/html/wiki/maintenance/importDump.php "$XML" || true
+IMPORT_RC=0
+docker compose exec -T wiki php /var/www/html/wiki/maintenance/importDump.php "$XML" || IMPORT_RC=$?
+if [ "$IMPORT_RC" -ne 0 ]; then echo "!! importDump gagal (rc=$IMPORT_RC) — cek log di dalam container" >&2; fi
 
 log "Daftarkan gambar ke database"
+IMG_RC=0
 docker compose exec -T wiki php /var/www/html/wiki/maintenance/importImages.php \
-  --search-recursively --skip-dupes --user 'Maintenance script' /workspace/data/images || true
+  --search-recursively --skip-dupes --user 'Maintenance script' /workspace/data/images || IMG_RC=$?
+if [ "$IMG_RC" -ne 0 ]; then echo "!! importImages gagal (rc=$IMG_RC)" >&2; fi
 
 docker compose exec -T wiki php /var/www/html/wiki/maintenance/initSiteStats.php --update
 
-log "SELESAI"
-echo "Buka       : http://localhost:8080/wiki/"
+STATS=$(curl -fsS --max-time 20 "$WG_SERVER_URL/wiki/api.php?action=query&meta=siteinfo&siprop=statistics&format=json" \
+  | python3 -c 'import json,sys; s=json.load(sys.stdin)["query"]["statistics"]; print(f"pages={s[chr(112)+chr(97)+chr(103)+chr(101)+chr(115)]} articles={s[chr(97)+chr(114)+chr(116)+chr(105)+chr(99)+chr(108)+chr(101)+chr(115)]} images={s[chr(105)+chr(109)+chr(97)+chr(103)+chr(101)+chr(115)]}")' 2>/dev/null || echo 'statistik tidak terbaca')
+
+log "SELESAI — GO LIVE"
+echo "Buka       : $WG_SERVER_URL/wiki/"
+echo "Statistik  : $STATS"
 echo "Folder     : $DIR"
-echo "Update     : cd $DIR && ./update.sh   (atau jalankan scripts/nightly_sync.py)"
+echo "Update     : cd $DIR && ./update.sh"
 echo "Login      : $DIR/ADMIN_CREDENTIALS.txt (0600)"
 echo "Catatan    : baca KNOWN_GAPS.md untuk halaman/gambar yang memang kosong di sumber."
 '''

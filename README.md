@@ -26,6 +26,29 @@ Script di atas otomatis:
 4. Mengambil semua halaman dan gambar lewat MediaWiki API (dengan retry).
 5. Import XML + gambar, lalu menghitung ulang statistik.
 
+### Opsi lewat environment (wajib dengan `sudo -E`)
+
+```bash
+export ONNOWIKI_DIR=/srv/onnowiki-replica   # default: $HOME/onnowiki-replica (sering /root/...)
+export WG_BIND_IP=192.0.2.73               # default: 127.0.0.1
+export WG_PORT=8080                         # default: 8080
+export WG_SERVER_URL=http://192.0.2.73:8080 # default: http://$WG_BIND_IP:$WG_PORT
+```
+
+`WG_BIND_IP`/`WG_PORT` mengubah `docker-compose.yml`; `WG_SERVER_URL` menulis `$wgServer`
+di `LocalSettings.php` (install.php sering mengabaikan `--servername`, jadi script memaksanya).
+
+### Tahapan yang dijalankan script
+
+1. **Curl installer** — satu perintah di atas (self-contained, tidak perlu `git clone`).
+2. **Docker** — install Docker + Compose plugin bila belum ada, lalu `docker compose up -d --build`.
+3. **Install MediaWiki** — `install.php`, password admin acak, hak edit anonim dimatikan.
+4. **Import** — halaman (XML) + gambar lewat API, lalu `initSiteStats.php --update`.
+5. **Go live** — verifikasi statistik lewat API, cetak URL + lokasi kredensial.
+
+Jika salah satu import gagal, script tetap melanjutkan tapi mencetak peringatan `!!` — jangan
+abaikan pesan itu.
+
 ## Login admin & izin edit
 
 Saat instalasi pertama, script **membuat password admin secara acak** (16 karakter) dan:
