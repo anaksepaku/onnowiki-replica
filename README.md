@@ -9,7 +9,8 @@ Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan 
 ## Cara pakai (Debian / Ubuntu saja untuk sekarang)
 
 ```bash
-curl -fsSL 'https://cdn.jsdelivr.net/gh/anaksepaku/onnowiki-replica@main/install-onnowiki.sh' | sudo bash
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' \
+  'https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main' | sudo bash
 ```
 
 Selesai. Buka **http://localhost:8080/wiki/**.
