@@ -639,6 +639,50 @@ export PAGES=5 IMAGES=3
 curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo -E bash
 ```
 
+## Akses dari perangkat lain / bind ke IP tertentu
+
+Secara default `docker-compose.yml` membuka port hanya di **loopback**:
+
+```yaml
+ports:
+  - "127.0.0.1:8080:80"
+```
+
+Itu sengaja supaya replika tidak terekspos. Kalau mau diakses dari komputer lain di LAN
+atau lewat IP Tailscale, ganti ke IP yang diinginkan:
+
+```yaml
+ports:
+  - "192.0.2.73:8080:80"     # ganti dengan IP server Anda
+  # - "0.0.0.0:8080:80"       # semua interface (hati-hati)
+  # - "198.51.100.77:8080:80" # contoh IP Tailscale
+```
+
+Lalu **sesuaikan `$wgServer`** di `wiki/LocalSettings.php`, kalau tidak, redirect `/wiki/`
+tetap mengarah ke `localhost`:
+
+```php
+$wgServer = "http://192.0.2.73:8080";
+```
+
+Terapkan perubahan:
+
+```bash
+cd onnowiki-replica
+docker compose down && docker compose up -d
+```
+
+Buka `http://192.0.2.73:8080/wiki/`.
+
+> `--servername` di `install.php` hanya dipakai saat instalasi pertama. Untuk wiki yang sudah
+> jalan, yang berlaku adalah `$wgServer` di `LocalSettings.php`.
+>
+> Sebelum membuka ke LAN/internet: ganti password DB `wikipassword` di `docker-compose.yml`,
+> dan ingat pengunjung anonim sudah tidak bisa edit. Port 8080 juga harus diizinkan di
+> firewall server (mis. `ufw allow from 192.0.2.0/24 to any port 8080`).
+> Untuk akses dari luar rumah, lebih aman lewat Tailscale/reverse proxy + HTTPS daripada
+> port-forward langsung.
+
 ## Port & path
 
 - Web: `http://localhost:8080/wiki/` — ubah `ports:` di `docker-compose.yml` kalau 8080 bentrok.
