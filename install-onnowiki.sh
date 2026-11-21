@@ -37,6 +37,10 @@ fi
 
 mkdir -p "$DIR/scripts" "$DIR/wiki" "$DIR/data" "$DIR/state"
 cd "$DIR"
+
+LOG_FILE="$DIR/install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 log "Menulis file ke $DIR"
 
 cat > Dockerfile <<'__ONNOWIKI_EOF_1__'
@@ -621,6 +625,24 @@ di `LocalSettings.php` (install.php sering mengabaikan `--servername`, jadi scri
 Jika salah satu import gagal, script tetap melanjutkan tapi mencetak peringatan `!!` — jangan
 abaikan pesan itu.
 
+## Uji install bersih sampai FULL import
+
+Script `install-full.sh` menghapus mode smoke (`PAGES`/`IMAGES`), menjalankan installer dari GitHub,
+lalu memverifikasi jumlah halaman/gambar. Untuk uji dari nol:
+
+```bash
+sudo rm -rf /root/onnowiki-replica-full
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' \
+  "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-full.sh?ref=main&cb=$(date +%s)" \
+  -o /tmp/install-full.sh
+sudo bash /tmp/install-full.sh
+```
+
+Output akhir harus `FULL_IMPORT=PASS` (minimal 18.000 halaman dan 6.400 gambar).
+Kalau port 8080 bentrok, set dulu `WG_PORT` dan jalankan dengan `sudo -E`.
+
+Log seluruh proses tersimpan di `$ONNOWIKI_DIR/install.log` — gunakan ini kalau sesi terputus.
+
 ## Login admin & izin edit
 
 Saat instalasi pertama, script **membuat password admin secara acak** (16 karakter) dan:
@@ -747,6 +769,51 @@ docker compose exec -T \
   -e WIKI_MAINTENANCE_DIR=/var/www/html/wiki/maintenance \
   wiki python3 /workspace/scripts/nightly_sync.py
 __ONNOWIKI_EOF_7__
+
+cat > install-full.sh <<'__ONNOWIKI_EOF_8__'
+#!/bin/bash
+# Install bersih + FULL import (tanpa mode smoke).
+# Dipakai untuk menguji alur lengkap dari nol sampai wiki siap dipakai.
+set -euo pipefail
+
+unset PAGES IMAGES   # pastikan tidak ada mode smoke yang tertinggal
+
+export ONNOWIKI_DIR="${ONNOWIKI_DIR:-/root/onnowiki-replica-full}"
+export WG_BIND_IP="${WG_BIND_IP:-127.0.0.1}"
+export WG_PORT="${WG_PORT:-8080}"
+export WG_SERVER_URL="${WG_SERVER_URL:-http://${WG_BIND_IP}:${WG_PORT}}"
+
+TMP=$(mktemp /tmp/onnowiki-full-XXXXXX.sh)
+trap 'rm -f "$TMP"' EXIT
+
+printf '\n==> Mengunduh installer terbaru dari GitHub\n'
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' \
+  "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" \
+  -o "$TMP"
+chmod +x "$TMP"
+
+printf '\n==> Menjalankan install + full import ke %s\n' "$ONNOWIKI_DIR"
+bash "$TMP"
+
+printf '\n==> Verifikasi akhir\n'
+STATS=$(curl -fsS --max-time 20 \
+  "$WG_SERVER_URL/wiki/api.php?action=query&meta=siteinfo&siprop=statistics&format=json" \
+  | python3 -c 'import json,sys; s=json.load(sys.stdin)["query"]["statistics"]; print(s["pages"], s["images"])')
+PAGES_FINAL=${STATS%% *}
+IMAGES_FINAL=${STATS##* }
+printf 'pages=%s images=%s\n' "$PAGES_FINAL" "$IMAGES_FINAL"
+
+if [ "$PAGES_FINAL" -ge 18000 ] && [ "$IMAGES_FINAL" -ge 6400 ]; then
+  printf 'FULL_IMPORT=PASS\n'
+else
+  printf 'FULL_IMPORT=FAIL (expected pages>=18000 images>=6400)\n' >&2
+  exit 1
+fi
+
+printf 'LOG      : %s/install.log\n' "$ONNOWIKI_DIR"
+printf 'CREDS    : %s/ADMIN_CREDENTIALS.txt (0600)\n' "$ONNOWIKI_DIR"
+printf 'URL      : %s/wiki/\n' "$WG_SERVER_URL"
+__ONNOWIKI_EOF_8__
 
 chmod +x scripts/*.py
 

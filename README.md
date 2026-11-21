@@ -49,6 +49,24 @@ di `LocalSettings.php` (install.php sering mengabaikan `--servername`, jadi scri
 Jika salah satu import gagal, script tetap melanjutkan tapi mencetak peringatan `!!` — jangan
 abaikan pesan itu.
 
+## Uji install bersih sampai FULL import
+
+Script `install-full.sh` menghapus mode smoke (`PAGES`/`IMAGES`), menjalankan installer dari GitHub,
+lalu memverifikasi jumlah halaman/gambar. Untuk uji dari nol:
+
+```bash
+sudo rm -rf /root/onnowiki-replica-full
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' \
+  "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-full.sh?ref=main&cb=$(date +%s)" \
+  -o /tmp/install-full.sh
+sudo bash /tmp/install-full.sh
+```
+
+Output akhir harus `FULL_IMPORT=PASS` (minimal 18.000 halaman dan 6.400 gambar).
+Kalau port 8080 bentrok, set dulu `WG_PORT` dan jalankan dengan `sudo -E`.
+
+Log seluruh proses tersimpan di `$ONNOWIKI_DIR/install.log` — gunakan ini kalau sesi terputus.
+
 ## Login admin & izin edit
 
 Saat instalasi pertama, script **membuat password admin secara acak** (16 karakter) dan:

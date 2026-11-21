@@ -9,6 +9,7 @@ files = [
     ("KNOWN_GAPS.md", "KNOWN_GAPS.md"),
     ("README.md", "README.md"),
     ("update.sh", "update.sh"),
+    ("install-full.sh", "install-full.sh"),
 ]
 
 head = r'''#!/bin/bash
@@ -50,6 +51,10 @@ fi
 
 mkdir -p "$DIR/scripts" "$DIR/wiki" "$DIR/data" "$DIR/state"
 cd "$DIR"
+
+LOG_FILE="$DIR/install.log"
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 log "Menulis file ke $DIR"
 '''
 
