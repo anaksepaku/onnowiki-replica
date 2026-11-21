@@ -24,9 +24,9 @@ Daftarnya ada di `failed_images.json` di folder `data/`.
 
 ## 3. Sumber sering error
 
-`api.telegram...` bukan — tapi `onnocenter.or.id` sesekali menjawab
+Ini bukan masalah Telegram. `onnocenter.or.id` sesekali menjawab
 "Cannot access the database". Skrip sudah retry dengan backoff. Kalau gagal total, jalankan
-ulang `replicate.sh`; berkas yang sudah terunduh tidak diunduh lagi (resume by size).
+ulang perintah installer di README; berkas yang sudah terunduh tidak diunduh lagi (resume by size).
 
 ## 4. HTTPS sumber expired
 

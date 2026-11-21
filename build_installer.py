@@ -16,7 +16,7 @@ head = r'''#!/bin/bash
 #   curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo bash
 #
 # Opsi (export dulu sebelum pipe):
-#   export PAGES=5 IMAGES=3   # smoke test cepat
+#   export PAGES=5 IMAGES=3   # smoke test cepat (pakai sudo -E agar env ikut)
 #   export ONNOWIKI_DIR=/srv/onnowiki-replica
 set -euo pipefail
 
@@ -75,7 +75,8 @@ until docker compose exec -T wiki php -r 'echo 1;' >/dev/null 2>&1; do sleep 2; 
 
 if [ ! -f wiki/LocalSettings.php ]; then
   log "Instalasi MediaWiki pertama kali"
-  ADMIN_PASS=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)
+  ADMIN_PASS=$(openssl rand -base64 18 2>/dev/null | tr -d '/+=' | cut -c1-16)
+  [ -n "$ADMIN_PASS" ] || ADMIN_PASS=$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | cut -c1-16)
   docker compose exec -T wiki php /var/www/html/wiki/maintenance/install.php \
     --dbname wikidb --dbuser wikiuser --dbpass wikipassword --dbserver db \
     --servername http://localhost:8080 --scriptpath /wiki --lang en \

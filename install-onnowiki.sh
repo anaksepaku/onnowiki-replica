@@ -3,7 +3,7 @@
 #   curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo bash
 #
 # Opsi (export dulu sebelum pipe):
-#   export PAGES=5 IMAGES=3   # smoke test cepat
+#   export PAGES=5 IMAGES=3   # smoke test cepat (pakai sudo -E agar env ikut)
 #   export ONNOWIKI_DIR=/srv/onnowiki-replica
 set -euo pipefail
 
@@ -75,7 +75,7 @@ services:
   wiki:
     build: .
     ports:
-      - "8080:80"
+      - "127.0.0.1:8080:80"
     volumes:
       - ./wiki:/var/www/html/wiki
       - ./data:/workspace/data
@@ -555,9 +555,9 @@ Daftarnya ada di `failed_images.json` di folder `data/`.
 
 ## 3. Sumber sering error
 
-`api.telegram...` bukan — tapi `onnocenter.or.id` sesekali menjawab
+Ini bukan masalah Telegram. `onnocenter.or.id` sesekali menjawab
 "Cannot access the database". Skrip sudah retry dengan backoff. Kalau gagal total, jalankan
-ulang `replicate.sh`; berkas yang sudah terunduh tidak diunduh lagi (resume by size).
+ulang perintah installer di README; berkas yang sudah terunduh tidak diunduh lagi (resume by size).
 
 ## 4. HTTPS sumber expired
 
@@ -636,7 +636,7 @@ Jalankan harian lewat cron/host bila mau.
 
 ```bash
 export PAGES=5 IMAGES=3
-curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo bash
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo -E bash
 ```
 
 ## Port & path
@@ -660,7 +660,12 @@ bukan kesalahan instalasi.
 | `docker-compose.yml` | MariaDB 10.11 + wiki |
 | `scripts/fetch_wiki.py` | Export halaman + unduh gambar (checkpoint, retry, resume) |
 | `scripts/nightly_sync.py` | Update inkremental lewat API |
+| `update.sh` | Update inkremental dari sumber |
 | `KNOWN_GAPS.md` | Daftar halaman/gambar yang tidak bisa diambil |
+
+> **Keamanan:** kompose hanya membuka port `127.0.0.1:8080` (tidak terekspos ke LAN/internet).
+> Password database bawaan adalah `wikipassword` — ganti di `docker-compose.yml` sebelum
+> membuka akses ke pihak lain. Password admin dibuat acak tiap instalasi.
 __ONNOWIKI_EOF_6__
 
 cat > update.sh <<'__ONNOWIKI_EOF_7__'
@@ -692,7 +697,8 @@ until docker compose exec -T wiki php -r 'echo 1;' >/dev/null 2>&1; do sleep 2; 
 
 if [ ! -f wiki/LocalSettings.php ]; then
   log "Instalasi MediaWiki pertama kali"
-  ADMIN_PASS=$(openssl rand -base64 18 | tr -d '/+=' | cut -c1-16)
+  ADMIN_PASS=$(openssl rand -base64 18 2>/dev/null | tr -d '/+=' | cut -c1-16)
+  [ -n "$ADMIN_PASS" ] || ADMIN_PASS=$(head -c 24 /dev/urandom | base64 | tr -d '/+=' | cut -c1-16)
   docker compose exec -T wiki php /var/www/html/wiki/maintenance/install.php \
     --dbname wikidb --dbuser wikiuser --dbpass wikipassword --dbserver db \
     --servername http://localhost:8080 --scriptpath /wiki --lang en \

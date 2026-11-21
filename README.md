@@ -64,7 +64,7 @@ Jalankan harian lewat cron/host bila mau.
 
 ```bash
 export PAGES=5 IMAGES=3
-curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo bash
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-onnowiki.sh?ref=main&cb=$(date +%s)" | sudo -E bash
 ```
 
 ## Port & path
@@ -88,4 +88,9 @@ bukan kesalahan instalasi.
 | `docker-compose.yml` | MariaDB 10.11 + wiki |
 | `scripts/fetch_wiki.py` | Export halaman + unduh gambar (checkpoint, retry, resume) |
 | `scripts/nightly_sync.py` | Update inkremental lewat API |
+| `update.sh` | Update inkremental dari sumber |
 | `KNOWN_GAPS.md` | Daftar halaman/gambar yang tidak bisa diambil |
+
+> **Keamanan:** kompose hanya membuka port `127.0.0.1:8080` (tidak terekspos ke LAN/internet).
+> Password database bawaan adalah `wikipassword` — ganti di `docker-compose.yml` sebelum
+> membuka akses ke pihak lain. Password admin dibuat acak tiap instalasi.
