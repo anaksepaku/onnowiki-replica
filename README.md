@@ -265,6 +265,9 @@ Buka `http://192.0.2.73:8080/wiki/`.
 Lihat [KNOWN_GAPS.md](KNOWN_GAPS.md): 14 judul dan 111 gambar memang kosong/404 di sumber,
 bukan kesalahan instalasi.
 
+Halaman utama **tidak** lagi berisi "MediaWiki has been installed" — installer menimpa
+`Main Page` dengan isi dari OnnoWiki lewat `scripts/fix_mainpage.sh` setelah import XML.
+
 ## Troubleshooting / FAQ
 
 **`Forbidden — You don't have permission to access this resource`**
@@ -300,6 +303,7 @@ Konten wiki berasal dari OnnoWiki/SpeedyWiki dan tetap butuh atribusi.
 | `docker-compose.yml` | MariaDB 10.11 + wiki |
 | `scripts/fetch_wiki.py` | Export halaman + unduh gambar (checkpoint, retry, resume) |
 | `scripts/nightly_sync.py` | Update inkremental lewat API |
+| `scripts/fix_mainpage.sh` | Timpa Main Page bawaan dengan isi OnnoWiki |
 | `update.sh` | Update inkremental dari sumber |
 | `install-full.sh` | Uji install bersih + full import + verifikasi |
 | `uninstall.sh` | Hapus instalasi beserta container/volume/network |

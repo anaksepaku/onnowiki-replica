@@ -6,6 +6,7 @@ files = [
     ("docker-compose.yml", "docker-compose.yml"),
     ("scripts/fetch_wiki.py", "scripts/fetch_wiki.py"),
     ("scripts/nightly_sync.py", "scripts/nightly_sync.py"),
+    ("scripts/fix_mainpage.sh", "scripts/fix_mainpage.sh"),
     ("KNOWN_GAPS.md", "KNOWN_GAPS.md"),
     ("README.md", "README.md"),
     ("update.sh", "update.sh"),
@@ -132,6 +133,11 @@ XML=$(docker compose exec -T wiki sh -c 'ls -1 /workspace/data/xml/wiki-*.xml | 
 IMPORT_RC=0
 docker compose exec -T wiki php /var/www/html/wiki/maintenance/importDump.php "$XML" || IMPORT_RC=$?
 if [ "$IMPORT_RC" -ne 0 ]; then echo "!! importDump gagal (rc=$IMPORT_RC) — cek log di dalam container" >&2; fi
+
+log "Timpa Main Page bawaan dengan Main Page OnnoWiki"
+MP_RC=0
+docker compose exec -T wiki bash /workspace/scripts/fix_mainpage.sh || MP_RC=$?
+if [ "$MP_RC" -ne 0 ]; then echo "!! Main Page gagal ditimpa (rc=$MP_RC)" >&2; fi
 
 log "Daftarkan gambar ke database"
 IMG_RC=0

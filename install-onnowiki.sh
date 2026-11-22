@@ -532,7 +532,32 @@ if __name__ == "__main__":
     main()
 __ONNOWIKI_EOF_4__
 
-cat > KNOWN_GAPS.md <<'__ONNOWIKI_EOF_5__'
+cat > scripts/fix_mainpage.sh <<'__ONNOWIKI_EOF_5__'
+#!/bin/bash
+# Timpa halaman utama bawaan MediaWiki dengan Main Page dari OnnoWiki.
+# Dijalankan di dalam container wiki.
+set -euo pipefail
+
+cd /var/www/html/wiki/maintenance
+
+curl -fsSL --max-time 45 \
+  'http://onnocenter.or.id/wiki/api.php?action=query&prop=revisions&titles=Main_Page&rvprop=content&rvslots=main&format=json&formatversion=2' \
+  | php -r '$d=json_decode(file_get_contents("php://stdin"),true); echo $d["query"]["pages"][0]["revisions"][0]["slots"]["main"]["content"];' \
+  > /tmp/mainpage.txt
+
+if [ ! -s /tmp/mainpage.txt ]; then
+  echo "Gagal mengambil Main Page dari sumber" >&2
+  exit 1
+fi
+
+php edit.php --user 'Maintenance script' \
+  --summary 'Import Main Page dari OnnoWiki' \
+  'Main Page' < /tmp/mainpage.txt
+
+rm -f /tmp/mainpage.txt
+__ONNOWIKI_EOF_5__
+
+cat > KNOWN_GAPS.md <<'__ONNOWIKI_EOF_6__'
 # Yang tidak ikut ter-replikasi (dan kenapa)
 
 Replika ini dibuat lewat **MediaWiki API**, bukan dump SQL, karena tautan unduhan lama
@@ -571,9 +596,9 @@ API dan gambar diambil lewat **`http://`**, bukan `https://`. Ini disengaja.
 
 Konten OnnoWiki/SpeedyWiki dinyatakan bebas diambil. Tetap cantumkan sumber:
 **OnnoWiki — onnocenter.or.id/wiki** dan **SpeedyWiki** di halaman About wiki lokal Anda.
-__ONNOWIKI_EOF_5__
+__ONNOWIKI_EOF_6__
 
-cat > README.md <<'__ONNOWIKI_EOF_6__'
+cat > README.md <<'__ONNOWIKI_EOF_7__'
 # Replikasi OnnoWiki — sekali tempel, langsung jadi
 
 Repositori ini berisi cara mereplikasi **OnnoWiki** (onnocenter.or.id/wiki) ke MediaWiki lokal
@@ -841,6 +866,9 @@ Buka `http://192.0.2.73:8080/wiki/`.
 Lihat [KNOWN_GAPS.md](KNOWN_GAPS.md): 14 judul dan 111 gambar memang kosong/404 di sumber,
 bukan kesalahan instalasi.
 
+Halaman utama **tidak** lagi berisi "MediaWiki has been installed" — installer menimpa
+`Main Page` dengan isi dari OnnoWiki lewat `scripts/fix_mainpage.sh` setelah import XML.
+
 ## Troubleshooting / FAQ
 
 **`Forbidden — You don't have permission to access this resource`**
@@ -876,6 +904,7 @@ Konten wiki berasal dari OnnoWiki/SpeedyWiki dan tetap butuh atribusi.
 | `docker-compose.yml` | MariaDB 10.11 + wiki |
 | `scripts/fetch_wiki.py` | Export halaman + unduh gambar (checkpoint, retry, resume) |
 | `scripts/nightly_sync.py` | Update inkremental lewat API |
+| `scripts/fix_mainpage.sh` | Timpa Main Page bawaan dengan isi OnnoWiki |
 | `update.sh` | Update inkremental dari sumber |
 | `install-full.sh` | Uji install bersih + full import + verifikasi |
 | `uninstall.sh` | Hapus instalasi beserta container/volume/network |
@@ -886,9 +915,9 @@ Konten wiki berasal dari OnnoWiki/SpeedyWiki dan tetap butuh atribusi.
 > **Keamanan:** kompose hanya membuka port `127.0.0.1:8080` (tidak terekspos ke LAN/internet).
 > Password database bawaan adalah `wikipassword` — ganti di `docker-compose.yml` sebelum
 > membuka akses ke pihak lain. Password admin dibuat acak tiap instalasi.
-__ONNOWIKI_EOF_6__
+__ONNOWIKI_EOF_7__
 
-cat > update.sh <<'__ONNOWIKI_EOF_7__'
+cat > update.sh <<'__ONNOWIKI_EOF_8__'
 #!/bin/bash
 # Update inkremental dari OnnoWiki ke wiki lokal.
 set -euo pipefail
@@ -899,9 +928,9 @@ docker compose exec -T \
   -e WIKI_STATE_DIR=/workspace/state \
   -e WIKI_MAINTENANCE_DIR=/var/www/html/wiki/maintenance \
   wiki python3 /workspace/scripts/nightly_sync.py
-__ONNOWIKI_EOF_7__
+__ONNOWIKI_EOF_8__
 
-cat > install-full.sh <<'__ONNOWIKI_EOF_8__'
+cat > install-full.sh <<'__ONNOWIKI_EOF_9__'
 #!/bin/bash
 # Install bersih + FULL import (tanpa mode smoke).
 # Dipakai untuk menguji alur lengkap dari nol sampai wiki siap dipakai.
@@ -944,9 +973,9 @@ fi
 printf 'LOG      : %s/install.log\n' "$ONNOWIKI_DIR"
 printf 'CREDS    : %s/ADMIN_CREDENTIALS.txt (0600)\n' "$ONNOWIKI_DIR"
 printf 'URL      : %s/wiki/\n' "$WG_SERVER_URL"
-__ONNOWIKI_EOF_8__
+__ONNOWIKI_EOF_9__
 
-cat > uninstall.sh <<'__ONNOWIKI_EOF_9__'
+cat > uninstall.sh <<'__ONNOWIKI_EOF_10__'
 #!/bin/bash
 # Hapus instalasi OnnoWiki lokal beserta container, volume, dan network.
 # Cara pakai: bash uninstall.sh /root/onnowiki-replica-full
@@ -996,9 +1025,9 @@ rm -rf "$DIR"
 echo "SELESAI."
 docker ps -a --format '{{.Names}}' | grep -F -- "$BASE" || echo "container: tidak ada"
 ss -ltn 2>/dev/null | grep 8080 || echo "port 8080: bebas"
-__ONNOWIKI_EOF_9__
+__ONNOWIKI_EOF_10__
 
-cat > CHANGELOG.md <<'__ONNOWIKI_EOF_10__'
+cat > CHANGELOG.md <<'__ONNOWIKI_EOF_11__'
 # Changelog
 
 Semua perubahan penting dicatat di sini. Format mengikuti
@@ -1024,14 +1053,18 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Waktu terukur: **59 menit 37 detik** (Docker build ±61 detik).
 - Akses `http://192.0.2.58:8080/wiki/` → 200 dari host lain (prau, rinjani).
 
+### Fixed
+- `Main Page` bawaan MediaWiki ("MediaWiki has been installed") kini ditimpa otomatis dengan
+  Main Page dari OnnoWiki via `scripts/fix_mainpage.sh` setelah import XML.
+
 ### Catatan
 - Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).
 - Hanya mendukung **Debian / Ubuntu**; Windows/macOS belum.
 - 14 halaman dan 111 gambar memang kosong/404 di server sumber — lihat `KNOWN_GAPS.md`.
 - Root `/` sengaja 403; halaman ada di `/wiki/`.
-__ONNOWIKI_EOF_10__
+__ONNOWIKI_EOF_11__
 
-cat > LICENSE <<'__ONNOWIKI_EOF_11__'
+cat > LICENSE <<'__ONNOWIKI_EOF_12__'
 MIT License
 
 Copyright (c) 2026 Saiful Anwar (anaksepaku)
@@ -1053,7 +1086,7 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-__ONNOWIKI_EOF_11__
+__ONNOWIKI_EOF_12__
 
 chmod +x scripts/*.py
 
@@ -1120,6 +1153,11 @@ XML=$(docker compose exec -T wiki sh -c 'ls -1 /workspace/data/xml/wiki-*.xml | 
 IMPORT_RC=0
 docker compose exec -T wiki php /var/www/html/wiki/maintenance/importDump.php "$XML" || IMPORT_RC=$?
 if [ "$IMPORT_RC" -ne 0 ]; then echo "!! importDump gagal (rc=$IMPORT_RC) — cek log di dalam container" >&2; fi
+
+log "Timpa Main Page bawaan dengan Main Page OnnoWiki"
+MP_RC=0
+docker compose exec -T wiki bash /workspace/scripts/fix_mainpage.sh || MP_RC=$?
+if [ "$MP_RC" -ne 0 ]; then echo "!! Main Page gagal ditimpa (rc=$MP_RC)" >&2; fi
 
 log "Daftarkan gambar ke database"
 IMG_RC=0

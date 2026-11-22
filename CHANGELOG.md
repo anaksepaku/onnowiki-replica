@@ -23,6 +23,10 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Waktu terukur: **59 menit 37 detik** (Docker build ±61 detik).
 - Akses `http://192.0.2.58:8080/wiki/` → 200 dari host lain (prau, rinjani).
 
+### Fixed
+- `Main Page` bawaan MediaWiki ("MediaWiki has been installed") kini ditimpa otomatis dengan
+  Main Page dari OnnoWiki via `scripts/fix_mainpage.sh` setelah import XML.
+
 ### Catatan
 - Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).
 - Hanya mendukung **Debian / Ubuntu**; Windows/macOS belum.
