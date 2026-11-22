@@ -1244,6 +1244,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Installer sekarang `chmod +x` semua `.sh`/`.py`, jadi `./update.sh` tidak lagi `Permission denied`.
 - README: panduan bind loopback + IP Tailscale, dan urutan aman pindah ingress Cloudflare ke
   `127.0.0.1:8080` sebelum menghapus bind IP LAN.
+- Prau: final state bind hanya `127.0.0.1:8080` + `198.51.100.77:8080` setelah ingress CF
+  terkonfirmasi `version=8`; bind LAN `192.0.2.73:8080` dihapus.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
