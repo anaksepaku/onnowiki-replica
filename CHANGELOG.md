@@ -23,6 +23,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - README memberi peringatan: rotasi DB harus dijalankan dari root project, bukan folder `wiki/`
   (compose bawaan MediaWiki di sana memicu error `.env not found` / `MW_DOCKER_UID`).
 - Installer sekarang `chmod +x` semua `.sh`/`.py`, jadi `./update.sh` tidak lagi `Permission denied`.
+- README: panduan bind loopback + IP Tailscale, dan urutan aman pindah ingress Cloudflare ke
+  `127.0.0.1:8080` sebelum menghapus bind IP LAN.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,

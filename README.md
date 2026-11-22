@@ -296,9 +296,26 @@ ganti setelah instalasi dan jangan pernah tempel di chat/repo.
 
 ### 3. Batasi akses jaringan
 
-- Bind ke IP yang dibutuhkan saja (`127.0.0.1` atau IP Tailscale), **jangan `0.0.0.0`**.
-- Firewall contoh: `ufw allow from 192.0.2.0/24 to any port 8080`.
-- Untuk internet: pakai **Tailscale / reverse proxy + HTTPS**, bukan port-forward HTTP langsung.
+Kalau `cloudflared` jalan **di host yang sama dengan wiki**, bind ke loopback dan (opsional)
+IP Tailscale host itu. Contoh di `docker-compose.yml`:
+
+```yaml
+ports:
+  - "127.0.0.1:8080:80"
+  - "100.x.y.z:8080:80"     # IP tailscale0 prau — ganti sesuai host Anda
+```
+
+Lalu di dashboard Cloudflare, Public Hostname `wiki.contoh.my.id` harus pointing ke
+**`http://127.0.0.1:8080`** — ingat, `127.0.0.1` diartikan **di mesin connector**, bukan di browser.
+Kalau ingress masih ke IP LAN, jangan hapus bind IP LAN dulu atau wiki akan 502.
+
+Akses via Tailscale (`http://100.x.y.z:8080/wiki/`) akan **di-redirect ke `$wgServer`**
+(HTTPS domain). Itu normal dan menjaga satu URL kanonik. Kalau butuh akses offline penuh,
+siapkan profil/hosts terpisah — jangan menurunkan `$wgServer` ke IP.
+
+- Jangan pernah bind `0.0.0.0:8080`.
+- Firewall: `ufw allow in on tailscale0 to any port 8080` jika perlu; loopback tidak perlu aturan.
+- Untuk internet: **Cloudflare Tunnel + HTTPS**, bukan port-forward HTTP langsung.
 
 ### 4. Backup & update
 
