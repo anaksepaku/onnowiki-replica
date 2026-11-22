@@ -643,6 +643,71 @@ Kalau port 8080 bentrok, set dulu `WG_PORT` dan jalankan dengan `sudo -E`.
 
 Log seluruh proses tersimpan di `$ONNOWIKI_DIR/install.log` — gunakan ini kalau sesi terputus.
 
+## Coba manual sebagai pengguna (disarankan)
+
+Kalau ingin memahami alurnya, jalankan langkah demi langkah (asal sudah `root`):
+
+```bash
+# 0. Pastikan bersih
+docker ps -a | grep -i onnowiki || echo "container: bersih"
+ss -ltnp | grep 8080 || echo "port 8080: bebas"
+
+# 1. Unduh script full-install
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' \
+  "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-full.sh?ref=main&cb=$(date +%s)" \
+  -o /tmp/install-full.sh
+head -5 /tmp/install-full.sh
+
+# 2. Jalankan (20–30 menit, ±600 MB)
+bash /tmp/install-full.sh
+
+# 3. Pantau dari terminal lain bila perlu
+tail -f /root/onnowiki-replica-full/install.log
+```
+
+Tahap yang lewat: unduh installer → Docker/Compose → `install.php` → **fetch halaman+gambar**
+(paling lama) → import XML+gambar → statistik → `FULL_IMPORT=PASS`.
+
+Verifikasi akhir:
+
+```bash
+grep wgServer /root/onnowiki-replica-full/wiki/LocalSettings.php
+grep -A2 'ports:' /root/onnowiki-replica-full/docker-compose.yml
+curl -s 'http://127.0.0.1:8080/wiki/api.php?action=query&meta=siteinfo&siprop=statistics&format=json'
+curl -s -o /dev/null -w 'web=%{http_code}\n' http://127.0.0.1:8080/wiki/
+cat /root/onnowiki-replica-full/ADMIN_CREDENTIALS.txt   # jangan tempel password ke chat
+```
+
+Kalau ada `!!` atau `FULL_IMPORT=FAIL`, baca `install.log` lalu **jalankan ulang perintah yang sama** —
+script aman diulang (resume download, tidak mengimpor ulang yang sudah ada).
+
+## Uninstall / hapus instalasi
+
+**Paling aman** — pakai script yang disediakan:
+
+```bash
+bash /root/onnowiki-replica-full/uninstall.sh /root/onnowiki-replica-full
+```
+
+Script ini: `docker compose down -v` dulu, lalu menghapus container/volume/network yatim
+(kalau folder sudah terhapus duluan), baru `rm -rf` folder. Diminta konfirmasi `y` sebelum hapus.
+
+Manual (urutan penting — `down -v` **sebelum** folder dihapus):
+
+```bash
+cd /root/onnowiki-replica-full && docker compose down -v
+cd /
+rm -rf /root/onnowiki-replica-full
+
+# Fallback kalau folder terlanjur hilang:
+docker rm -f onnowiki-replica-full-wiki-1 onnowiki-replica-full-db-1 2>/dev/null || true
+docker volume rm onnowiki-replica-full_dbdata 2>/dev/null || true
+docker network rm onnowiki-replica-full_default 2>/dev/null || true
+
+docker ps -a | grep -i onnowiki || echo "container: tidak ada"
+ss -ltnp | grep 8080 || echo "port 8080: bebas"
+```
+
 ## Login admin & izin edit
 
 Saat instalasi pertama, script **membuat password admin secara acak** (16 karakter) dan:
@@ -750,6 +815,8 @@ bukan kesalahan instalasi.
 | `scripts/fetch_wiki.py` | Export halaman + unduh gambar (checkpoint, retry, resume) |
 | `scripts/nightly_sync.py` | Update inkremental lewat API |
 | `update.sh` | Update inkremental dari sumber |
+| `install-full.sh` | Uji install bersih + full import + verifikasi |
+| `uninstall.sh` | Hapus instalasi beserta container/volume/network |
 | `KNOWN_GAPS.md` | Daftar halaman/gambar yang tidak bisa diambil |
 
 > **Keamanan:** kompose hanya membuka port `127.0.0.1:8080` (tidak terekspos ke LAN/internet).
@@ -814,6 +881,58 @@ printf 'LOG      : %s/install.log\n' "$ONNOWIKI_DIR"
 printf 'CREDS    : %s/ADMIN_CREDENTIALS.txt (0600)\n' "$ONNOWIKI_DIR"
 printf 'URL      : %s/wiki/\n' "$WG_SERVER_URL"
 __ONNOWIKI_EOF_8__
+
+cat > uninstall.sh <<'__ONNOWIKI_EOF_9__'
+#!/bin/bash
+# Hapus instalasi OnnoWiki lokal beserta container, volume, dan network.
+# Cara pakai: bash uninstall.sh /root/onnowiki-replica-full
+set -euo pipefail
+
+DIR="${1:-${ONNOWIKI_DIR:-/root/onnowiki-replica-full}}"
+BASE=$(basename "$DIR")
+
+echo "Target : $DIR"
+echo "Project: $BASE"
+read -r -p "Hapus folder + container + volume + network ini? [y/N] " jawab
+if [ "$jawab" != "y" ] && [ "$jawab" != "Y" ]; then
+  echo "Dibatalkan."
+  exit 1
+fi
+
+if [ -f "$DIR/docker-compose.yml" ]; then
+  echo ">> docker compose down -v"
+  (cd "$DIR" && docker compose down -v) || true
+fi
+
+# Fallback kalau folder sudah terhapus lebih dulu / compose tidak bisa dijalankan.
+IDS=$(docker ps -a --format '{{.ID}} {{.Names}}' | grep -F -- "$BASE" | awk '{print $1}' || true)
+if [ -n "$IDS" ]; then
+  echo ">> menghapus container yatim: $IDS"
+  # shellcheck disable=SC2086
+  docker rm -f $IDS || true
+fi
+
+VOLS=$(docker volume ls --format '{{.Name}}' | grep -F -- "$BASE" || true)
+if [ -n "$VOLS" ]; then
+  echo ">> menghapus volume: $VOLS"
+  # shellcheck disable=SC2086
+  docker volume rm $VOLS || true
+fi
+
+NETS=$(docker network ls --format '{{.Name}}' | grep -F -- "$BASE" || true)
+if [ -n "$NETS" ]; then
+  echo ">> menghapus network: $NETS"
+  # shellcheck disable=SC2086
+  docker network rm $NETS || true
+fi
+
+echo ">> menghapus folder $DIR"
+rm -rf "$DIR"
+
+echo "SELESAI."
+docker ps -a --format '{{.Names}}' | grep -F -- "$BASE" || echo "container: tidak ada"
+ss -ltn 2>/dev/null | grep 8080 || echo "port 8080: bebas"
+__ONNOWIKI_EOF_9__
 
 chmod +x scripts/*.py
 

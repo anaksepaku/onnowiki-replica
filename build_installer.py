@@ -10,6 +10,7 @@ files = [
     ("README.md", "README.md"),
     ("update.sh", "update.sh"),
     ("install-full.sh", "install-full.sh"),
+    ("uninstall.sh", "uninstall.sh"),
 ]
 
 head = r'''#!/bin/bash
