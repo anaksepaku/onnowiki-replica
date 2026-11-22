@@ -16,6 +16,7 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Password admin acak 16 karakter disimpan di `ADMIN_CREDENTIALS.txt` (0600).
 - `LICENSE` (MIT untuk script) dan catatan atribusi konten OnnoWiki/SpeedyWiki.
 - Tutorial manual, troubleshooting, dan cara uninstall di README.
+- Panduan install ke folder khusus lewat `ONNOWIKI_DIR` (mis. `/srv`) tanpa paste script ke folder.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,

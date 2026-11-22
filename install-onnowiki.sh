@@ -671,6 +671,35 @@ export WG_SERVER_URL=http://192.0.2.73:8080 # default: http://$WG_BIND_IP:$WG_PO
 `WG_BIND_IP`/`WG_PORT` mengubah `docker-compose.yml`; `WG_SERVER_URL` menulis `$wgServer`
 di `LocalSettings.php` (install.php sering mengabaikan `--servername`, jadi script memaksanya).
 
+### Install ke folder khusus (mis. `/srv`)
+
+**Tidak perlu** masuk/paste script ke folder tujuan. Script dijalankan dari mana saja, lalu
+`ONNOWIKI_DIR` menentukan di mana semua file dibuat — folder akan dibuat otomatis.
+
+```bash
+export ONNOWIKI_DIR=/srv/onnowiki-replica-prau
+export WG_BIND_IP=192.0.2.73
+export WG_PORT=8080
+export WG_SERVER_URL=http://192.0.2.73:8080
+
+curl -fsSL -H 'Accept: application/vnd.github.raw+json' \
+  "https://api.github.com/repos/anaksepaku/onnowiki-replica/contents/install-full.sh?ref=main&cb=$(date +%s)" \
+  -o /tmp/install-full.sh
+
+bash /tmp/install-full.sh
+```
+
+Kalau tidak root, gunakan `sudo -E bash /tmp/install-full.sh` supaya variabel `export` ikut.
+
+Kenapa `/srv`? Root `/` sering mepet (butuh ±2,3–3 GB saat import). Gunakan mount dengan
+ruang lega. Cek dulu: `df -h /srv`.
+
+Setelah selesai:
+```bash
+ls -d /srv/onnowiki-replica-prau
+curl -s -o /dev/null -w '%{http_code}\n' http://192.0.2.73:8080/wiki/
+```
+
 ### Tahapan yang dijalankan script
 
 1. **Curl installer** — satu perintah di atas (self-contained, tidak perlu `git clone`).
@@ -1046,6 +1075,7 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Password admin acak 16 karakter disimpan di `ADMIN_CREDENTIALS.txt` (0600).
 - `LICENSE` (MIT untuk script) dan catatan atribusi konten OnnoWiki/SpeedyWiki.
 - Tutorial manual, troubleshooting, dan cara uninstall di README.
+- Panduan install ke folder khusus lewat `ONNOWIKI_DIR` (mis. `/srv`) tanpa paste script ke folder.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
