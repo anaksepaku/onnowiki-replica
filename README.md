@@ -16,9 +16,12 @@ Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan 
 | Web | `http://IP:8080/wiki/` → 200 (diakses dari host lain) |
 | OS | Debian / Ubuntu |
 
-> **Halaman utama kosong atau gambar tidak tampil?** Itu dua masalah yang sudah terkenal dan
-> punya solusi di [Troubleshooting / FAQ](#troubleshooting--faq). Installer terbaru sudah
-> menangani keduanya otomatis.
+> **Halaman utama kosong, gambar tidak tampil, atau login admin gagal?** Semua sudah punya solusi
+> di [Troubleshooting / FAQ](#troubleshooting--faq). Installer terbaru sudah menangani otomatis;
+> untuk instalasi lama ada perintah manual di sana.
+>
+> **Pakai untuk produksi?** Baca [Pengamanan untuk server produksi](#pengamanan-untuk-server-produksi)
+> — ganti password database, batasi bind, dan siapkan backup.
 
 ## Prasyarat
 
@@ -211,6 +214,10 @@ Saat instalasi pertama, script **membuat password admin secara acak** (16 karakt
 User admin: **`Admin`** (kalau tidak ada, cek `Special:ListUsers` di wiki lokal).
 **Segera ganti password** lewat `Special:ChangePassword` setelah login.
 
+> **Instalasi lama:** karena urutan argumen `install.php` dulu terbalik, user admin bisa jadi
+> **`OnnoWiki Lokal`** walaupun file kredensial menulis `Admin`. Coba login dengan nama itu,
+> atau lihat [FAQ login admin](#troubleshooting--faq) untuk reset password.
+
 Secara default MediaWiki **mengizinkan siapa saja mengedit**, termasuk pengunjung anonim.
 Karena ini replika publik, installer menambahkan ke `LocalSettings.php`:
 
@@ -224,6 +231,53 @@ Jadi **pengunjung hanya bisa membaca**. User terdaftar tetap bisa edit (default 
 Pengaturan ini **tidak ada di dashboard admin web** — harus disunting di file
 `wiki/LocalSettings.php` di server (atau memakai ekstensi seperti ManageWiki kalau ingin lewat UI).
 Untuk mengizinkan edit anonim lagi, hapus/ubah tiga baris itu lalu restart container.
+
+## Pengamanan untuk server produksi
+
+Instalasi default ditujukan untuk **localhost / LAN**. Sebelum dipakai produksi:
+
+### 1. Ganti password database (wajib)
+
+Default `wikipassword` untuk `root` dan `wikiuser` terbuka di repo. Port `3306` memang hanya internal
+Docker, tapi tetap ganti:
+
+```bash
+cd /srv/onnowiki-replica-prau
+
+NEW_DB=$(openssl rand -base64 24 | tr -d '/+=')
+NEW_ROOT=$(openssl rand -base64 24 | tr -d '/+=')
+
+docker compose exec -T db mysql -uroot -pwikipassword -e "
+ALTER USER 'wikiuser'@'%' IDENTIFIED BY '$NEW_DB';
+ALTER USER 'root'@'%' IDENTIFIED BY '$NEW_ROOT';
+ALTER USER 'root'@'localhost' IDENTIFIED BY '$NEW_ROOT';
+FLUSH PRIVILEGES;"
+
+# Edit docker-compose.yml: MARIADB_ROOT_PASSWORD=$NEW_ROOT, MARIADB_PASSWORD=$NEW_DB
+# Edit wiki/LocalSettings.php: \$wgDBpassword = "$NEW_DB";
+docker compose down && docker compose up -d
+```
+
+Verifikasi: `http://IP:8080/wiki/` tetap **200** dan API statistik terbaca.
+Jangan pernah publish port 3306 ke host/internet.
+
+### 2. Ganti password admin wiki
+
+Masuk sebagai admin, lalu `Special:ChangePassword`. Password bawaan sudah acak, tapi tetap
+ganti setelah instalasi dan jangan pernah tempel di chat/repo.
+
+### 3. Batasi akses jaringan
+
+- Bind ke IP yang dibutuhkan saja (`127.0.0.1` atau IP Tailscale), **jangan `0.0.0.0`**.
+- Firewall contoh: `ufw allow from 192.0.2.0/24 to any port 8080`.
+- Untuk internet: pakai **Tailscale / reverse proxy + HTTPS**, bukan port-forward HTTP langsung.
+
+### 4. Backup & update
+
+- Backup berkala: `docker compose exec db mysqldump -uroot -p<pass> wikidb > wikidb.sql`
+  + folder `wiki/images/` + `ADMIN_CREDENTIALS.txt`.
+- Jalankan `./update.sh` berkala untuk sinkron perubahan dari sumber.
+- Simpan kredensial hanya di file mode `0600`, jangan di repo/chat.
 
 ## Update halaman dari sumber
 

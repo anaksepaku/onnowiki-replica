@@ -17,6 +17,7 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - `LICENSE` (MIT untuk script) dan catatan atribusi konten OnnoWiki/SpeedyWiki.
 - Tutorial manual, troubleshooting, dan cara uninstall di README.
 - Panduan install ke folder khusus lewat `ONNOWIKI_DIR` (mis. `/srv`) tanpa paste script ke folder.
+- Bagian **Pengamanan untuk server produksi**: ganti password DB, admin, bind/firewall, backup.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
@@ -31,6 +32,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
   tampil sebagai `mw-broken-media`.
 - Urutan argumen `install.php` diperbaiki: user admin sekarang benar-benar `Admin` sesuai
   `ADMIN_CREDENTIALS.txt` (sebelumnya `OnnoWiki Lokal`).
+- README memberi peringatan eksplisit + FAQ untuk instalasi lama yang user admin-nya masih
+  `OnnoWiki Lokal`, lengkap dengan perintah reset password.
 
 ### Catatan
 - Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).
