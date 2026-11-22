@@ -1006,6 +1006,14 @@ docker compose exec -T wiki php /var/www/html/wiki/maintenance/changePassword.ph
 
 Password baru juga bisa dicek di `ADMIN_CREDENTIALS.txt` (mode 0600).
 
+**`./update.sh` → Permission denied**
+File script hasil instalasi lama belum executable. Perbaiki:
+```bash
+cd /srv/onnowiki-replica-prau
+chmod +x update.sh install-full.sh uninstall.sh scripts/*.sh scripts/*.py
+```
+Installer terbaru sudah melakukan `chmod` otomatis untuk semua script.
+
 **Error `.env not found` / `MW_DOCKER_UID` saat `docker compose`**
 Anda berada di folder `wiki/` (ada compose bawaan MediaWiki di sana). Kembali ke root project:
 `cd /srv/onnowiki-replica-prau`, atau pakai `docker compose -f /srv/onnowiki-replica-prau/docker-compose.yml ...`.
@@ -1216,6 +1224,7 @@ Semua perubahan penting dicatat di sini. Format mengikuti
   `LocalSettings.php`, dan penyimpanan password acak ke file `0600`.
 - README memberi peringatan: rotasi DB harus dijalankan dari root project, bukan folder `wiki/`
   (compose bawaan MediaWiki di sana memicu error `.env not found` / `MW_DOCKER_UID`).
+- Installer sekarang `chmod +x` semua `.sh`/`.py`, jadi `./update.sh` tidak lagi `Permission denied`.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
@@ -1264,7 +1273,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 __ONNOWIKI_EOF_12__
 
-chmod +x scripts/*.py
+chmod +x *.sh scripts/*.sh scripts/*.py
 
 WG_BIND_IP="${WG_BIND_IP:-127.0.0.1}"
 WG_PORT="${WG_PORT:-8080}"

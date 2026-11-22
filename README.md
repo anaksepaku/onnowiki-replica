@@ -405,6 +405,14 @@ docker compose exec -T wiki php /var/www/html/wiki/maintenance/changePassword.ph
 
 Password baru juga bisa dicek di `ADMIN_CREDENTIALS.txt` (mode 0600).
 
+**`./update.sh` → Permission denied**
+File script hasil instalasi lama belum executable. Perbaiki:
+```bash
+cd /srv/onnowiki-replica-prau
+chmod +x update.sh install-full.sh uninstall.sh scripts/*.sh scripts/*.py
+```
+Installer terbaru sudah melakukan `chmod` otomatis untuk semua script.
+
 **Error `.env not found` / `MW_DOCKER_UID` saat `docker compose`**
 Anda berada di folder `wiki/` (ada compose bawaan MediaWiki di sana). Kembali ke root project:
 `cd /srv/onnowiki-replica-prau`, atau pakai `docker compose -f /srv/onnowiki-replica-prau/docker-compose.yml ...`.

@@ -68,7 +68,7 @@ for i, (src, dest) in enumerate(files, 1):
     delim = f"__ONNOWIKI_EOF_{i}__"
     write_blocks.append(f"cat > {dest} <<'{delim}'\n{content.rstrip()}\n{delim}\n\n")
 
-tail = r'''chmod +x scripts/*.py
+tail = r'''chmod +x *.sh scripts/*.sh scripts/*.py
 
 WG_BIND_IP="${WG_BIND_IP:-127.0.0.1}"
 WG_PORT="${WG_PORT:-8080}"
