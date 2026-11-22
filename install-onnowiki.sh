@@ -911,6 +911,19 @@ Anda membuka root `/`. Docroot kosong dan directory listing mati. Buka **`/wiki/
 `install.php` belum jalan — kemungkinan sesi terputus setelah `docker compose up`. Jalankan ulang
 one-liner/`install-full.sh` (resume, aman) atau cek `$ONNOWIKI_DIR/install.log`.
 
+**Login admin gagal / "salah password"**
+Cek nama user di `ADMIN_CREDENTIALS.txt`. Pada instalasi lama, user admin bisa jadi
+**`OnnoWiki Lokal`** (bukan `Admin`) karena urutan argumen `install.php` terbalik.
+Kalau perlu reset:
+
+```bash
+cd /srv/onnowiki-replica-prau
+docker compose exec -T wiki php /var/www/html/wiki/maintenance/changePassword.php \
+  --user 'OnnoWiki Lokal' --password '**************'
+```
+
+Password baru juga bisa dicek di `ADMIN_CREDENTIALS.txt` (mode 0600).
+
 **Folder tidak ketemu setelah `sudo bash`**
 Karena `sudo`, `$HOME` jadi `/root`. Cek `/root/onnowiki-replica/` atau set `ONNOWIKI_DIR`.
 
@@ -1124,6 +1137,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
   Main Page dari OnnoWiki via `scripts/fix_mainpage.sh` setelah import XML.
 - Parser cache dibersihkan (`purgeParserCache.php --age 0`) setelah import agar gambar tidak
   tampil sebagai `mw-broken-media`.
+- Urutan argumen `install.php` diperbaiki: user admin sekarang benar-benar `Admin` sesuai
+  `ADMIN_CREDENTIALS.txt` (sebelumnya `OnnoWiki Lokal`).
 
 ### Catatan
 - Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).
@@ -1183,7 +1198,7 @@ if [ ! -f wiki/LocalSettings.php ]; then
   docker compose exec -T wiki php /var/www/html/wiki/maintenance/install.php \
     --dbname wikidb --dbuser wikiuser --dbpass wikipassword --dbserver db \
     --servername "$WG_SERVER_URL" --scriptpath /wiki --lang en \
-    --pass "$ADMIN_PASS" 'OnnoWiki Lokal' 'Admin'
+    --pass "$ADMIN_PASS" 'Admin' 'OnnoWiki Lokal'
   # install.php sering mengabaikan --servername; paksa di LocalSettings.php
   sed -i "s|^\$wgServer = .*|\$wgServer = \"$WG_SERVER_URL\";|" wiki/LocalSettings.php
   cat >> wiki/LocalSettings.php <<'PERMS'

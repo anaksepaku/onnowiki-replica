@@ -95,7 +95,7 @@ if [ ! -f wiki/LocalSettings.php ]; then
   docker compose exec -T wiki php /var/www/html/wiki/maintenance/install.php \
     --dbname wikidb --dbuser wikiuser --dbpass wikipassword --dbserver db \
     --servername "$WG_SERVER_URL" --scriptpath /wiki --lang en \
-    --pass "$ADMIN_PASS" 'OnnoWiki Lokal' 'Admin'
+    --pass "$ADMIN_PASS" 'Admin' 'OnnoWiki Lokal'
   # install.php sering mengabaikan --servername; paksa di LocalSettings.php
   sed -i "s|^\$wgServer = .*|\$wgServer = \"$WG_SERVER_URL\";|" wiki/LocalSettings.php
   cat >> wiki/LocalSettings.php <<'PERMS'

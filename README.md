@@ -310,6 +310,19 @@ Anda membuka root `/`. Docroot kosong dan directory listing mati. Buka **`/wiki/
 `install.php` belum jalan — kemungkinan sesi terputus setelah `docker compose up`. Jalankan ulang
 one-liner/`install-full.sh` (resume, aman) atau cek `$ONNOWIKI_DIR/install.log`.
 
+**Login admin gagal / "salah password"**
+Cek nama user di `ADMIN_CREDENTIALS.txt`. Pada instalasi lama, user admin bisa jadi
+**`OnnoWiki Lokal`** (bukan `Admin`) karena urutan argumen `install.php` terbalik.
+Kalau perlu reset:
+
+```bash
+cd /srv/onnowiki-replica-prau
+docker compose exec -T wiki php /var/www/html/wiki/maintenance/changePassword.php \
+  --user 'OnnoWiki Lokal' --password '**************'
+```
+
+Password baru juga bisa dicek di `ADMIN_CREDENTIALS.txt` (mode 0600).
+
 **Folder tidak ketemu setelah `sudo bash`**
 Karena `sudo`, `$HOME` jadi `/root`. Cek `/root/onnowiki-replica/` atau set `ONNOWIKI_DIR`.
 

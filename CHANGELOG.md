@@ -29,6 +29,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
   Main Page dari OnnoWiki via `scripts/fix_mainpage.sh` setelah import XML.
 - Parser cache dibersihkan (`purgeParserCache.php --age 0`) setelah import agar gambar tidak
   tampil sebagai `mw-broken-media`.
+- Urutan argumen `install.php` diperbaiki: user admin sekarang benar-benar `Admin` sesuai
+  `ADMIN_CREDENTIALS.txt` (sebelumnya `OnnoWiki Lokal`).
 
 ### Catatan
 - Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).
