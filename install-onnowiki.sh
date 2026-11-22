@@ -845,19 +845,42 @@ Docker, tapi tetap ganti:
 ```bash
 cd /srv/onnowiki-replica-prau
 
+cp docker-compose.yml docker-compose.yml.bak
+cp wiki/LocalSettings.php wiki/LocalSettings.php.bak
+
+# Password acak. Kalau mau pakai password sendiri, ganti dua baris ini dengan:
+# NEW_DB='PasswordWikiAnda2026'
+# NEW_ROOT='PasswordRootAnda2026'
 NEW_DB=$(openssl rand -base64 24 | tr -d '/+=')
 NEW_ROOT=$(openssl rand -base64 24 | tr -d '/+=')
 
+# -pwikipassword = password ROOT LAMA. Ganti hanya saat berikutnya (pakai $NEW_ROOT).
 docker compose exec -T db mysql -uroot -pwikipassword -e "
 ALTER USER 'wikiuser'@'%' IDENTIFIED BY '$NEW_DB';
 ALTER USER 'root'@'%' IDENTIFIED BY '$NEW_ROOT';
 ALTER USER 'root'@'localhost' IDENTIFIED BY '$NEW_ROOT';
 FLUSH PRIVILEGES;"
 
-# Edit docker-compose.yml: MARIADB_ROOT_PASSWORD=$NEW_ROOT, MARIADB_PASSWORD=$NEW_DB
-# Edit wiki/LocalSettings.php: \$wgDBpassword = "$NEW_DB";
+# Samakan docker-compose.yml dan LocalSettings.php dengan DB
+sed -i "s|MARIADB_ROOT_PASSWORD:.*|MARIADB_ROOT_PASSWORD: '$NEW_ROOT'|" docker-compose.yml
+sed -i "s|MARIADB_PASSWORD:.*|MARIADB_PASSWORD: '$NEW_DB'|" docker-compose.yml
+sed -i "s|^\$wgDBpassword = .*|\$wgDBpassword = \"$NEW_DB\";|" wiki/LocalSettings.php
+
+# SIMPAN password baru (mode 0600) — kalau tidak, password acak hilang saat terminal tutup
+cat > /root/onnowiki-db-creds.txt <<EOF
+DB_USER=wikiuser
+DB_PASS=***
+DB_ROOT_PASS=***
+EOF
+chmod 600 /root/onnowiki-db-creds.txt
+
 docker compose down && docker compose up -d
 ```
+
+**Penting:** jangan berhenti setelah `NEW_DB=` / `NEW_ROOT=` — itu hanya membuat variabel,
+belum mengubah apa pun. Jalankan sampai baris `docker compose up -d`. Password acak juga
+wajib disimpan ke `/root/onnowiki-db-creds.txt`; kalau tidak, Anda tidak bisa login DB lagi
+setelah terminal ditutup.
 
 Verifikasi: `http://IP:8080/wiki/` tetap **200** dan API statistik terbaca.
 Jangan pernah publish port 3306 ke host/internet.
@@ -1180,6 +1203,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Tutorial manual, troubleshooting, dan cara uninstall di README.
 - Panduan install ke folder khusus lewat `ONNOWIKI_DIR` (mis. `/srv`) tanpa paste script ke folder.
 - Bagian **Pengamanan untuk server produksi**: ganti password DB, admin, bind/firewall, backup.
+- Tutorial ganti password DB diperbaiki: include backup, `sed` otomatis untuk compose +
+  `LocalSettings.php`, dan penyimpanan password acak ke file `0600`.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,

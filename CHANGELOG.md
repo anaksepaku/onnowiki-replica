@@ -18,6 +18,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Tutorial manual, troubleshooting, dan cara uninstall di README.
 - Panduan install ke folder khusus lewat `ONNOWIKI_DIR` (mis. `/srv`) tanpa paste script ke folder.
 - Bagian **Pengamanan untuk server produksi**: ganti password DB, admin, bind/firewall, backup.
+- Tutorial ganti password DB diperbaiki: include backup, `sed` otomatis untuk compose +
+  `LocalSettings.php`, dan penyimpanan password acak ke file `0600`.
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
