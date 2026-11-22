@@ -20,6 +20,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Bagian **Pengamanan untuk server produksi**: ganti password DB, admin, bind/firewall, backup.
 - Tutorial ganti password DB diperbaiki: include backup, `sed` otomatis untuk compose +
   `LocalSettings.php`, dan penyimpanan password acak ke file `0600`.
+- README memberi peringatan: rotasi DB harus dijalankan dari root project, bukan folder `wiki/`
+  (compose bawaan MediaWiki di sana memicu error `.env not found` / `MW_DOCKER_UID`).
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,

@@ -842,6 +842,11 @@ Instalasi default ditujukan untuk **localhost / LAN**. Sebelum dipakai produksi:
 Default `wikipassword` untuk `root` dan `wikiuser` terbuka di repo. Port `3306` memang hanya internal
 Docker, tapi tetap ganti:
 
+> ⚠️ **Jalankan dari ROOT project** (`/srv/onnowiki-replica-prau`), **bukan** dari folder `wiki/`.
+> Di dalam `wiki/` ada `docker-compose.yml` bawaan MediaWiki yang berbeda — kalau salah folder,
+> `docker compose` akan komplain `.env not found` / `MW_DOCKER_UID` dan perubahan tidak kena.
+> Kalau ragu, awali setiap perintah dengan `-f /srv/onnowiki-replica-prau/docker-compose.yml`.
+
 ```bash
 cd /srv/onnowiki-replica-prau
 
@@ -1000,6 +1005,10 @@ docker compose exec -T wiki php /var/www/html/wiki/maintenance/changePassword.ph
 ```
 
 Password baru juga bisa dicek di `ADMIN_CREDENTIALS.txt` (mode 0600).
+
+**Error `.env not found` / `MW_DOCKER_UID` saat `docker compose`**
+Anda berada di folder `wiki/` (ada compose bawaan MediaWiki di sana). Kembali ke root project:
+`cd /srv/onnowiki-replica-prau`, atau pakai `docker compose -f /srv/onnowiki-replica-prau/docker-compose.yml ...`.
 
 **Folder tidak ketemu setelah `sudo bash`**
 Karena `sudo`, `$HOME` jadi `/root`. Cek `/root/onnowiki-replica/` atau set `ONNOWIKI_DIR`.
@@ -1205,6 +1214,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Bagian **Pengamanan untuk server produksi**: ganti password DB, admin, bind/firewall, backup.
 - Tutorial ganti password DB diperbaiki: include backup, `sed` otomatis untuk compose +
   `LocalSettings.php`, dan penyimpanan password acak ke file `0600`.
+- README memberi peringatan: rotasi DB harus dijalankan dari root project, bukan folder `wiki/`
+  (compose bawaan MediaWiki di sana memicu error `.env not found` / `MW_DOCKER_UID`).
 
 ### Verifikasi
 - Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
