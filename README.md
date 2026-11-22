@@ -82,12 +82,16 @@ curl -fsSL -H 'Accept: application/vnd.github.raw+json' \
   -o /tmp/install-full.sh
 head -5 /tmp/install-full.sh
 
-# 2. Jalankan (20–30 menit, ±600 MB)
+# 2. Jalankan (± 60 menit pada 6.500 gambar, ±600 MB)
 bash /tmp/install-full.sh
 
 # 3. Pantau dari terminal lain bila perlu
 tail -f /root/onnowiki-replica-full/install.log
 ```
+
+Waktu terukur pada server `.58`: **59 menit 37 detik** (log dibuat 00:44:15 UTC, selesai
+01:43:52 UTC). Docker build ±61 detik; sisanya fetch + import. Jadi siapkan waktu ±1 jam,
+bukan 20–30 menit.
 
 Tahap yang lewat: unduh installer → Docker/Compose → `install.php` → **fetch halaman+gambar**
 (paling lama) → import XML+gambar → statistik → `FULL_IMPORT=PASS`.
