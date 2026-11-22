@@ -24,6 +24,7 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 - Akses `http://192.0.2.58:8080/wiki/` → 200 dari host lain (prau, rinjani).
 
 ### Catatan
+- Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).
 - Hanya mendukung **Debian / Ubuntu**; Windows/macOS belum.
 - 14 halaman dan 111 gambar memang kosong/404 di server sumber — lihat `KNOWN_GAPS.md`.
 - Root `/` sengaja 403; halaman ada di `/wiki/`.

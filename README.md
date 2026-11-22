@@ -19,9 +19,24 @@ Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan 
 ## Prasyarat
 
 - Debian / Ubuntu dengan akses `root` atau `sudo`.
-- Koneksi internet (unduh ±600 MB) dan ruang disk **minimal 5 GB**.
+- Koneksi internet (unduh ±600 MB) dan ruang disk bebas sesuai tabel di bawah.
 - Port 8080 bebas (atau set `WG_PORT` ke port lain).
 - Docker akan dipasang otomatis oleh script bila belum ada.
+
+### Spesifikasi server minimum
+
+| Komponen | Minimum | Disarankan |
+|---|---|---|
+| CPU | **1 vCPU** | 2 vCPU |
+| RAM | **2 GB** | 4 GB |
+| Disk bebas | **5 GB** | 10 GB |
+| OS | Debian 12/13 atau Ubuntu 22.04/24.04 | versi LTS terbaru |
+| Network | unduh ±600 MB, stabil | — |
+
+Catatan: teruji sukses di VM **2 GB RAM / 30 GB disk (saat itu sisa 3,9 GB)** dengan full import.
+Pemakaian idle setelah jalan: wiki ±78 MB, MariaDB ±260 MB. Saat import RAM bisa naik —
+2 GB masih cukup, tapi **4 GB lebih aman** kalau server dipakai untuk layanan lain.
+Kebutuhan disk aktual: `data/` ±671 MB + `wiki/` ±1,6 GB + database; 5 GB memberi ruang aman.
 
 ## Cara pakai (Debian / Ubuntu saja untuk sekarang)
 
