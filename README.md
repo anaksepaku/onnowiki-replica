@@ -16,6 +16,10 @@ Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan 
 | Web | `http://IP:8080/wiki/` → 200 (diakses dari host lain) |
 | OS | Debian / Ubuntu |
 
+> **Halaman utama kosong atau gambar tidak tampil?** Itu dua masalah yang sudah terkenal dan
+> punya solusi di [Troubleshooting / FAQ](#troubleshooting--faq). Installer terbaru sudah
+> menangani keduanya otomatis.
+
 ## Prasyarat
 
 - Debian / Ubuntu dengan akses `root` atau `sudo`.
@@ -315,14 +319,37 @@ Set `WG_PORT=8081` lalu jalankan dengan `sudo -E`.
 **Ada baris `!!` atau `FULL_IMPORT=FAIL`**
 Baca `install.log`, lalu ulangi perintah yang sama. Download gambar di-resume by size.
 
-**Gambar tidak tampil / `mw-broken-media`**
-Parser cache masih menyimpan halaman yang dirender sebelum gambar ter-import. Installer sudah
-menjalankan `maintenance/purgeParserCache.php --age 0`. Kalau masih terjadi, jalankan manual:
+**Halaman utama masih kosong / "MediaWiki has been installed"**
+`importDump.php` tidak menimpa halaman yang sudah ada. Installer terbaru sudah menjalankan
+`scripts/fix_mainpage.sh`. Kalau wiki lama masih begini:
 
 ```bash
-cd onnowiki-replica
+cd /srv/onnowiki-replica-prau          # sesuaikan folder Anda
+docker compose exec -T wiki bash /workspace/scripts/fix_mainpage.sh
+```
+
+Cek:
+```bash
+curl -s "http://IP:8080/wiki/api.php?action=query&prop=revisions&titles=Main_Page&rvprop=content&rvslots=main&format=json&formatversion=2" | grep -o 'SpeedyWiki'
+```
+
+**Gambar tidak tampil / `mw-broken-media` / ikon gambar rusak**
+File dan DB biasanya sudah benar — yang salah adalah **parser cache** yang masih menyimpan
+halaman dari sebelum gambar di-import. Installer terbaru sudah menjalankan
+`maintenance/purgeParserCache.php --age 0`. Kalau masih terjadi:
+
+```bash
+cd /srv/onnowiki-replica-prau          # sesuaikan folder Anda
 docker compose exec -T wiki php /var/www/html/wiki/maintenance/purgeParserCache.php --age 0
 ```
+
+Cek dulu apakah file aslinya bisa diakses (harus `200`):
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  http://IP:8080/wiki/images/5/5c/0.0buka_case.jpg
+```
+
+Setelah purge, artikel yang tadinya broken harus menampilkan `<img>` (bukan `mw-broken-media`).
 
 **`127.0.0.1:8080` tidak jalan setelah ganti bind**
 Wajar — port hanya di-bind ke IP yang Anda set. Pakai IP tersebut.
