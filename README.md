@@ -6,6 +6,23 @@ tanpa perlu bantuan AI, tanpa dump SQL, dan tanpa akses ke server sumber.
 Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan bebas diambil.
 **Berikan atribusi ke OnnoWiki/SpeedyWiki di wiki lokal Anda.**
 
+## Status terverifikasi
+
+| Item | Hasil |
+|---|---|
+| Full import | **FULL_IMPORT=PASS** (22 Nov 2026, server `.58`) |
+| Halaman | 18.185 · artikel 6.890 · gambar 6.457 · edit 24.593 |
+| Waktu | 59 menit 37 detik (±1 jam) |
+| Web | `http://IP:8080/wiki/` → 200 (diakses dari host lain) |
+| OS | Debian / Ubuntu |
+
+## Prasyarat
+
+- Debian / Ubuntu dengan akses `root` atau `sudo`.
+- Koneksi internet (unduh ±600 MB) dan ruang disk **minimal 5 GB**.
+- Port 8080 bebas (atau set `WG_PORT` ke port lain).
+- Docker akan dipasang otomatis oleh script bila belum ada.
+
 ## Cara pakai (Debian / Ubuntu saja untuk sekarang)
 
 ```bash
@@ -233,6 +250,32 @@ Buka `http://192.0.2.73:8080/wiki/`.
 Lihat [KNOWN_GAPS.md](KNOWN_GAPS.md): 14 judul dan 111 gambar memang kosong/404 di sumber,
 bukan kesalahan instalasi.
 
+## Troubleshooting / FAQ
+
+**`Forbidden — You don't have permission to access this resource`**
+Anda membuka root `/`. Docroot kosong dan directory listing mati. Buka **`/wiki/`**.
+
+**`LocalSettings.php` tidak ada**
+`install.php` belum jalan — kemungkinan sesi terputus setelah `docker compose up`. Jalankan ulang
+one-liner/`install-full.sh` (resume, aman) atau cek `$ONNOWIKI_DIR/install.log`.
+
+**Folder tidak ketemu setelah `sudo bash`**
+Karena `sudo`, `$HOME` jadi `/root`. Cek `/root/onnowiki-replica/` atau set `ONNOWIKI_DIR`.
+
+**Port 8080 sudah dipakai**
+Set `WG_PORT=8081` lalu jalankan dengan `sudo -E`.
+
+**Ada baris `!!` atau `FULL_IMPORT=FAIL`**
+Baca `install.log`, lalu ulangi perintah yang sama. Download gambar di-resume by size.
+
+**`127.0.0.1:8080` tidak jalan setelah ganti bind**
+Wajar — port hanya di-bind ke IP yang Anda set. Pakai IP tersebut.
+
+## Lisensi
+
+Script di repo ini berlisensi **MIT** — lihat [LICENSE](LICENSE).
+Konten wiki berasal dari OnnoWiki/SpeedyWiki dan tetap butuh atribusi.
+
 ## Isi repo
 
 | File | Fungsi |
@@ -246,6 +289,8 @@ bukan kesalahan instalasi.
 | `install-full.sh` | Uji install bersih + full import + verifikasi |
 | `uninstall.sh` | Hapus instalasi beserta container/volume/network |
 | `KNOWN_GAPS.md` | Daftar halaman/gambar yang tidak bisa diambil |
+| `CHANGELOG.md` | Riwayat versi |
+| `LICENSE` | MIT untuk script + catatan atribusi konten |
 
 > **Keamanan:** kompose hanya membuka port `127.0.0.1:8080` (tidak terekspos ke LAN/internet).
 > Password database bawaan adalah `wikipassword` — ganti di `docker-compose.yml` sebelum

@@ -11,6 +11,8 @@ files = [
     ("update.sh", "update.sh"),
     ("install-full.sh", "install-full.sh"),
     ("uninstall.sh", "uninstall.sh"),
+    ("CHANGELOG.md", "CHANGELOG.md"),
+    ("LICENSE", "LICENSE"),
 ]
 
 head = r'''#!/bin/bash

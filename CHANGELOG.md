@@ -1,0 +1,29 @@
+# Changelog
+
+Semua perubahan penting dicatat di sini. Format mengikuti
+[Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
+
+## [1.0.0] - 2026-11-22
+
+### Ditambahkan
+- Installer satu perintah `install-onnowiki.sh` (self-contained, Docker + MediaWiki + import).
+- `install-full.sh` untuk uji bersih sampai full import + verifikasi `FULL_IMPORT=PASS`.
+- `uninstall.sh` untuk menghapus instalasi beserta container/volume/network.
+- `update.sh` + `scripts/nightly_sync.py` untuk update inkremental lewat `recentchanges`.
+- Log permanen `$ONNOWIKI_DIR/install.log` via `tee`.
+- Env `ONNOWIKI_DIR`, `WG_BIND_IP`, `WG_PORT`, `WG_SERVER_URL` untuk bind IP/hostname.
+- Hak edit anonim dimatikan secara default di `LocalSettings.php`.
+- Password admin acak 16 karakter disimpan di `ADMIN_CREDENTIALS.txt` (0600).
+- `LICENSE` (MIT untuk script) dan catatan atribusi konten OnnoWiki/SpeedyWiki.
+- Tutorial manual, troubleshooting, dan cara uninstall di README.
+
+### Verifikasi
+- Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
+  `images=6457`, `edits=24593`.
+- Waktu terukur: **59 menit 37 detik** (Docker build ±61 detik).
+- Akses `http://192.0.2.58:8080/wiki/` → 200 dari host lain (prau, rinjani).
+
+### Catatan
+- Hanya mendukung **Debian / Ubuntu**; Windows/macOS belum.
+- 14 halaman dan 111 gambar memang kosong/404 di server sumber — lihat `KNOWN_GAPS.md`.
+- Root `/` sengaja 403; halaman ada di `/wiki/`.

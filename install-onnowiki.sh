@@ -582,6 +582,23 @@ tanpa perlu bantuan AI, tanpa dump SQL, dan tanpa akses ke server sumber.
 Sumber: https://onnocenter.or.id/wiki/ · konten SpeedyWiki/OnnoWiki dinyatakan bebas diambil.
 **Berikan atribusi ke OnnoWiki/SpeedyWiki di wiki lokal Anda.**
 
+## Status terverifikasi
+
+| Item | Hasil |
+|---|---|
+| Full import | **FULL_IMPORT=PASS** (22 Nov 2026, server `.58`) |
+| Halaman | 18.185 · artikel 6.890 · gambar 6.457 · edit 24.593 |
+| Waktu | 59 menit 37 detik (±1 jam) |
+| Web | `http://IP:8080/wiki/` → 200 (diakses dari host lain) |
+| OS | Debian / Ubuntu |
+
+## Prasyarat
+
+- Debian / Ubuntu dengan akses `root` atau `sudo`.
+- Koneksi internet (unduh ±600 MB) dan ruang disk **minimal 5 GB**.
+- Port 8080 bebas (atau set `WG_PORT` ke port lain).
+- Docker akan dipasang otomatis oleh script bila belum ada.
+
 ## Cara pakai (Debian / Ubuntu saja untuk sekarang)
 
 ```bash
@@ -809,6 +826,32 @@ Buka `http://192.0.2.73:8080/wiki/`.
 Lihat [KNOWN_GAPS.md](KNOWN_GAPS.md): 14 judul dan 111 gambar memang kosong/404 di sumber,
 bukan kesalahan instalasi.
 
+## Troubleshooting / FAQ
+
+**`Forbidden — You don't have permission to access this resource`**
+Anda membuka root `/`. Docroot kosong dan directory listing mati. Buka **`/wiki/`**.
+
+**`LocalSettings.php` tidak ada**
+`install.php` belum jalan — kemungkinan sesi terputus setelah `docker compose up`. Jalankan ulang
+one-liner/`install-full.sh` (resume, aman) atau cek `$ONNOWIKI_DIR/install.log`.
+
+**Folder tidak ketemu setelah `sudo bash`**
+Karena `sudo`, `$HOME` jadi `/root`. Cek `/root/onnowiki-replica/` atau set `ONNOWIKI_DIR`.
+
+**Port 8080 sudah dipakai**
+Set `WG_PORT=8081` lalu jalankan dengan `sudo -E`.
+
+**Ada baris `!!` atau `FULL_IMPORT=FAIL`**
+Baca `install.log`, lalu ulangi perintah yang sama. Download gambar di-resume by size.
+
+**`127.0.0.1:8080` tidak jalan setelah ganti bind**
+Wajar — port hanya di-bind ke IP yang Anda set. Pakai IP tersebut.
+
+## Lisensi
+
+Script di repo ini berlisensi **MIT** — lihat [LICENSE](LICENSE).
+Konten wiki berasal dari OnnoWiki/SpeedyWiki dan tetap butuh atribusi.
+
 ## Isi repo
 
 | File | Fungsi |
@@ -822,6 +865,8 @@ bukan kesalahan instalasi.
 | `install-full.sh` | Uji install bersih + full import + verifikasi |
 | `uninstall.sh` | Hapus instalasi beserta container/volume/network |
 | `KNOWN_GAPS.md` | Daftar halaman/gambar yang tidak bisa diambil |
+| `CHANGELOG.md` | Riwayat versi |
+| `LICENSE` | MIT untuk script + catatan atribusi konten |
 
 > **Keamanan:** kompose hanya membuka port `127.0.0.1:8080` (tidak terekspos ke LAN/internet).
 > Password database bawaan adalah `wikipassword` — ganti di `docker-compose.yml` sebelum
@@ -937,6 +982,68 @@ echo "SELESAI."
 docker ps -a --format '{{.Names}}' | grep -F -- "$BASE" || echo "container: tidak ada"
 ss -ltn 2>/dev/null | grep 8080 || echo "port 8080: bebas"
 __ONNOWIKI_EOF_9__
+
+cat > CHANGELOG.md <<'__ONNOWIKI_EOF_10__'
+# Changelog
+
+Semua perubahan penting dicatat di sini. Format mengikuti
+[Keep a Changelog](https://keepachangelog.com/id/1.1.0/).
+
+## [1.0.0] - 2026-11-22
+
+### Ditambahkan
+- Installer satu perintah `install-onnowiki.sh` (self-contained, Docker + MediaWiki + import).
+- `install-full.sh` untuk uji bersih sampai full import + verifikasi `FULL_IMPORT=PASS`.
+- `uninstall.sh` untuk menghapus instalasi beserta container/volume/network.
+- `update.sh` + `scripts/nightly_sync.py` untuk update inkremental lewat `recentchanges`.
+- Log permanen `$ONNOWIKI_DIR/install.log` via `tee`.
+- Env `ONNOWIKI_DIR`, `WG_BIND_IP`, `WG_PORT`, `WG_SERVER_URL` untuk bind IP/hostname.
+- Hak edit anonim dimatikan secara default di `LocalSettings.php`.
+- Password admin acak 16 karakter disimpan di `ADMIN_CREDENTIALS.txt` (0600).
+- `LICENSE` (MIT untuk script) dan catatan atribusi konten OnnoWiki/SpeedyWiki.
+- Tutorial manual, troubleshooting, dan cara uninstall di README.
+
+### Verifikasi
+- Full import di server `.58`: **FULL_IMPORT=PASS**, `pages=18185`, `articles=6890`,
+  `images=6457`, `edits=24593`.
+- Waktu terukur: **59 menit 37 detik** (Docker build ±61 detik).
+- Akses `http://192.0.2.58:8080/wiki/` → 200 dari host lain (prau, rinjani).
+
+### Catatan
+- Hanya mendukung **Debian / Ubuntu**; Windows/macOS belum.
+- 14 halaman dan 111 gambar memang kosong/404 di server sumber — lihat `KNOWN_GAPS.md`.
+- Root `/` sengaja 403; halaman ada di `/wiki/`.
+__ONNOWIKI_EOF_10__
+
+cat > LICENSE <<'__ONNOWIKI_EOF_11__'
+MIT License
+
+Copyright (c) 2026 Saiful Anwar (anaksepaku)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Catatan: lisensi ini berlaku untuk **kode/script** di repositori ini.
+Konten wiki yang direplikasi berasal dari **OnnoWiki / SpeedyWiki** dan tetap
+memerlukan atribusi ke sumber tersebut di wiki lokal Anda.
+__ONNOWIKI_EOF_11__
 
 chmod +x scripts/*.py
 
