@@ -302,7 +302,7 @@ IP Tailscale host itu. Contoh di `docker-compose.yml`:
 ```yaml
 ports:
   - "127.0.0.1:8080:80"
-  - "100.x.y.z:8080:80"     # IP tailscale0 prau — ganti sesuai host Anda
+  - "100.x.y.z:8080:80"     # IP tailscale0  — ganti sesuai host Anda
 ```
 
 Lalu di dashboard Cloudflare, Public Hostname `wiki.contoh.my.id` harus pointing ke
