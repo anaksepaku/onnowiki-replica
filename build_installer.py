@@ -147,6 +147,11 @@ if [ "$IMG_RC" -ne 0 ]; then echo "!! importImages gagal (rc=$IMG_RC)" >&2; fi
 
 docker compose exec -T wiki php /var/www/html/wiki/maintenance/initSiteStats.php --update
 
+log "Bersihkan parser cache (agar gambar tidak broken)"
+PC_RC=0
+docker compose exec -T wiki php /var/www/html/wiki/maintenance/purgeParserCache.php --age 0 >/dev/null 2>&1 || PC_RC=$?
+if [ "$PC_RC" -ne 0 ]; then echo "!! purgeParserCache gagal (rc=$PC_RC)" >&2; fi
+
 STATS=$(curl -fsS --max-time 20 "$WG_SERVER_URL/wiki/api.php?action=query&meta=siteinfo&siprop=statistics&format=json" \
   | python3 -c 'import json,sys; s=json.load(sys.stdin)["query"]["statistics"]; print(f"pages={s[chr(112)+chr(97)+chr(103)+chr(101)+chr(115)]} articles={s[chr(97)+chr(114)+chr(116)+chr(105)+chr(99)+chr(108)+chr(101)+chr(115)]} images={s[chr(105)+chr(109)+chr(97)+chr(103)+chr(101)+chr(115)]}")' 2>/dev/null || echo 'statistik tidak terbaca')
 

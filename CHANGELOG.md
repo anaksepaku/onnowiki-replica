@@ -27,6 +27,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 ### Fixed
 - `Main Page` bawaan MediaWiki ("MediaWiki has been installed") kini ditimpa otomatis dengan
   Main Page dari OnnoWiki via `scripts/fix_mainpage.sh` setelah import XML.
+- Parser cache dibersihkan (`purgeParserCache.php --age 0`) setelah import agar gambar tidak
+  tampil sebagai `mw-broken-media`.
 
 ### Catatan
 - Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).

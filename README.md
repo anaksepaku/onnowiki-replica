@@ -315,6 +315,15 @@ Set `WG_PORT=8081` lalu jalankan dengan `sudo -E`.
 **Ada baris `!!` atau `FULL_IMPORT=FAIL`**
 Baca `install.log`, lalu ulangi perintah yang sama. Download gambar di-resume by size.
 
+**Gambar tidak tampil / `mw-broken-media`**
+Parser cache masih menyimpan halaman yang dirender sebelum gambar ter-import. Installer sudah
+menjalankan `maintenance/purgeParserCache.php --age 0`. Kalau masih terjadi, jalankan manual:
+
+```bash
+cd onnowiki-replica
+docker compose exec -T wiki php /var/www/html/wiki/maintenance/purgeParserCache.php --age 0
+```
+
 **`127.0.0.1:8080` tidak jalan setelah ganti bind**
 Wajar — port hanya di-bind ke IP yang Anda set. Pakai IP tersebut.
 

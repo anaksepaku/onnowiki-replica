@@ -916,6 +916,15 @@ Set `WG_PORT=8081` lalu jalankan dengan `sudo -E`.
 **Ada baris `!!` atau `FULL_IMPORT=FAIL`**
 Baca `install.log`, lalu ulangi perintah yang sama. Download gambar di-resume by size.
 
+**Gambar tidak tampil / `mw-broken-media`**
+Parser cache masih menyimpan halaman yang dirender sebelum gambar ter-import. Installer sudah
+menjalankan `maintenance/purgeParserCache.php --age 0`. Kalau masih terjadi, jalankan manual:
+
+```bash
+cd onnowiki-replica
+docker compose exec -T wiki php /var/www/html/wiki/maintenance/purgeParserCache.php --age 0
+```
+
 **`127.0.0.1:8080` tidak jalan setelah ganti bind**
 Wajar — port hanya di-bind ke IP yang Anda set. Pakai IP tersebut.
 
@@ -1086,6 +1095,8 @@ Semua perubahan penting dicatat di sini. Format mengikuti
 ### Fixed
 - `Main Page` bawaan MediaWiki ("MediaWiki has been installed") kini ditimpa otomatis dengan
   Main Page dari OnnoWiki via `scripts/fix_mainpage.sh` setelah import XML.
+- Parser cache dibersihkan (`purgeParserCache.php --age 0`) setelah import agar gambar tidak
+  tampil sebagai `mw-broken-media`.
 
 ### Catatan
 - Spesifikasi minimum: 1 vCPU / 2 GB RAM / 5 GB disk bebas (disarankan 2 vCPU / 4 GB / 10 GB).
@@ -1196,6 +1207,11 @@ docker compose exec -T wiki php /var/www/html/wiki/maintenance/importImages.php 
 if [ "$IMG_RC" -ne 0 ]; then echo "!! importImages gagal (rc=$IMG_RC)" >&2; fi
 
 docker compose exec -T wiki php /var/www/html/wiki/maintenance/initSiteStats.php --update
+
+log "Bersihkan parser cache (agar gambar tidak broken)"
+PC_RC=0
+docker compose exec -T wiki php /var/www/html/wiki/maintenance/purgeParserCache.php --age 0 >/dev/null 2>&1 || PC_RC=$?
+if [ "$PC_RC" -ne 0 ]; then echo "!! purgeParserCache gagal (rc=$PC_RC)" >&2; fi
 
 STATS=$(curl -fsS --max-time 20 "$WG_SERVER_URL/wiki/api.php?action=query&meta=siteinfo&siprop=statistics&format=json" \
   | python3 -c 'import json,sys; s=json.load(sys.stdin)["query"]["statistics"]; print(f"pages={s[chr(112)+chr(97)+chr(103)+chr(101)+chr(115)]} articles={s[chr(97)+chr(114)+chr(116)+chr(105)+chr(99)+chr(108)+chr(101)+chr(115)]} images={s[chr(105)+chr(109)+chr(97)+chr(103)+chr(101)+chr(115)]}")' 2>/dev/null || echo 'statistik tidak terbaca')
